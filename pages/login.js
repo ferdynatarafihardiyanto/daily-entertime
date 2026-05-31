@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/router'
-import USERS from '../data/users'
+import { loginAPI } from '../lib/api'
 
 export default function Login() {
   const router = useRouter()
@@ -11,39 +11,31 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    // Cari user berdasarkan email atau username
-    const user = USERS.find(
-      (u) =>
-        (u.email === identifier || u.username === identifier) &&
-        u.password === password
-    )
+    try {
+      const data = await loginAPI(identifier, password)
+      const user = data.data?.user
 
-    setTimeout(() => {
-      setLoading(false)
       if (user) {
-        // Simpan sesi sederhana di localStorage
-        localStorage.setItem('currentUser', JSON.stringify({
-          id: user.id,
-          name: user.name,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        }))
-        // Redirect ke homepage atau admin
-        if (user.role === 'admin') {
+        // Tutup menu/sidebar secara default ketika baru login
+        localStorage.setItem('sidebarOpen', JSON.stringify(false))
+
+        // Redirect berdasarkan role
+        if (user.roles && user.roles.includes('admin')) {
           router.push('/admin')
         } else {
           router.push('/')
         }
-      } else {
-        setError('Email/Username atau Password salah.')
       }
-    }, 600)
+    } catch (err) {
+      setError(err.message || 'Email atau Password salah.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -67,7 +59,7 @@ export default function Login() {
             banyak lagi setiap hari.
           </p>
 
-          {/* Demo accounts hint */}
+          {/* Info box */}
           <div style={{
             marginTop: '40px',
             padding: '16px 20px',
@@ -77,9 +69,9 @@ export default function Login() {
             fontSize: '13px',
             color: '#D1D5DB',
           }}>
-            <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#A855F7' }}>🔑 Akun Uji Coba:</p>
-            <p style={{ margin: '2px 0' }}>Admin &nbsp;&nbsp;→ <code style={{ color: '#E9D5FF' }}>admin@demo.com</code> / <code style={{ color: '#E9D5FF' }}>admin123</code></p>
-            <p style={{ margin: '2px 0' }}>User &nbsp;&nbsp;&nbsp;→ <code style={{ color: '#E9D5FF' }}>user1@demo.com</code> / <code style={{ color: '#E9D5FF' }}>user1234</code></p>
+            <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#A855F7' }}>🔗 Terintegrasi dengan Backend</p>
+            <p style={{ margin: '2px 0' }}>Login menggunakan akun yang sudah terdaftar di database.</p>
+            <p style={{ margin: '2px 0' }}>Belum punya akun? <Link href="/register" style={{ color: '#E9D5FF' }}>Daftar di sini</Link></p>
           </div>
         </div>
 
@@ -113,7 +105,7 @@ export default function Login() {
             {/* Form */}
             <form className="login-form" onSubmit={handleSubmit}>
               {/* Email Input */}
-              <label style={{ display: 'block', marginBottom: '0.02px', fontWeight: '200', color: 'black' }}>Email atau Username</label>
+              <label style={{ display: 'block', marginBottom: '0.02px', fontWeight: '200', color: 'black' }}>Email</label>
               <div className="login-input-group">
                 <span className="input-icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -123,7 +115,7 @@ export default function Login() {
                 </span>
                 <input
                   type="text"
-                  placeholder="Masukkan Email atau Username"
+                  placeholder="Masukkan Email"
                   className="login-input"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}

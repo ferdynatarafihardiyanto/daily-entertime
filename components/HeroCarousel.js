@@ -1,11 +1,20 @@
 export default function HeroSection() {
+  const handleExploreClick = () => {
+    const element = document.getElementById('leaderboard')
+    if (element) {
+      // Offset by 80px to prevent the fixed navbar from covering the section title
+      const top = element.getBoundingClientRect().top + window.scrollY - 80
+      window.scrollTo({ top, behavior: 'smooth' })
+    }
+  }
+
   return (
     <div style={{ display: 'flex', width: '100%', height: '750px', backgroundColor: 'black' }}>
 
       {/* Left Panel */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <img src="/filmaboutyou.svg" alt="The 1975" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(100%)' }} />
-        {/* Overlay for media player */}
+        {/* Overlay for media player
         <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', padding: '20px', color: 'white' }}>
           <p style={{ margin: 0, fontSize: '12px', color: '#ccc' }}>1975</p>
           <h3 style={{ margin: 0, fontSize: '24px' }}>About You</h3>
@@ -16,7 +25,7 @@ export default function HeroSection() {
               <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '30%', backgroundColor: 'white', borderRadius: '2px' }}></div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Center Panel */}
@@ -24,7 +33,9 @@ export default function HeroSection() {
         <img src="/digital.svg" alt="News" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         {/* Explore Button */}
         <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '100%', textAlign: 'center' }}>
-          <button style={{ backgroundColor: '#A855F7', color: 'white', border: 'none', padding: '15px 40px', borderRadius: '30px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
+          <button 
+            onClick={handleExploreClick}
+            style={{ backgroundColor: '#A855F7', color: 'white', border: 'none', padding: '15px 40px', borderRadius: '30px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
             Explore Now
           </button>
         </div>

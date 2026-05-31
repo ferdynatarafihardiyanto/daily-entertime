@@ -1,43 +1,195 @@
 import Layout from '../components/Layout'
 import Footer from '../components/Footer'
+import { useState, useEffect } from 'react'
+import { getHistories, removeHistory, isLoggedIn } from '../lib/api'
+import { useRouter } from 'next/router'
 
 export default function History() {
-  const historyItems = [
-    { id: 1, title: 'Miracle in Cell No.7', type: 'Film', time: 'Hari ini', image: '/filmmiracle.svg' },
-    { id: 2, title: 'Nyaman', type: 'Musik', time: 'Kemarin', image: '/lagunyaman.svg' },
-    { id: 3, title: 'Lagi, Giliran Sekretaris Angkatan Laut AS dipecat', type: 'Berita', time: 'Kemarin', image: '/beritarekom1.svg' },
-    { id: 4, title: 'Toy Story 3', type: 'Film', time: '2 hari lalu', image: '/filmtoystory.svg' },
-  ]
+  const router = useRouter()
+  const [historyItems, setHistoryItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeCategory, setActiveCategory] = useState('Film')
+  const [selectedIds, setSelectedIds] = useState(new Set())
+
+  useEffect(() => {
+    async function fetchHistory() {
+      if (!isLoggedIn()) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const data = await getHistories()
+        if (data.data && data.data.length > 0) {
+          const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
+          const items = data.data.map((item) => ({
+            id: item.history_id || item.id,
+            content_id: item.content_id || item.id,
+            title: item.title || 'Untitled',
+            type: categoryNames[item.category_id] || item.category || 'Lainnya',
+            dateAdded: item.viewed_at ? new Date(item.viewed_at).getFullYear().toString() : '2026',
+            producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
+            description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
+            image: item.thumbnail || '/filmmiracle.svg',
+          }))
+          setHistoryItems(items)
+        } else {
+          setHistoryItems([])
+        }
+      } catch (err) {
+        console.log('Failed to fetch history:', err.message)
+        setHistoryItems([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchHistory()
+  }, [])
+
+  const filteredItems = historyItems.filter(item => item.type === activeCategory)
+
+  const toggleSelection = (contentId) => {
+    const newSelected = new Set(selectedIds)
+    if (newSelected.has(contentId)) {
+      newSelected.delete(contentId)
+    } else {
+      newSelected.add(contentId)
+    }
+    setSelectedIds(newSelected)
+  }
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) {
+      alert('Pilih item yang ingin dihapus dengan menceklis kotaknya terlebih dahulu.')
+      return
+    }
+
+    if (!confirm(`Hapus ${selectedIds.size} item riwayat terpilih?`)) return
+
+    try {
+      const deletePromises = Array.from(selectedIds).map(contentId => removeHistory(contentId))
+      await Promise.all(deletePromises)
+      
+      setHistoryItems(historyItems.filter(item => !selectedIds.has(item.content_id)))
+      setSelectedIds(new Set())
+      alert('Berhasil menghapus item.')
+    } catch (err) {
+      alert('Gagal menghapus beberapa item: ' + err.message)
+    }
+  }
 
   return (
-    <Layout title="History - Final Project">
+    <Layout title="Riwayat - Final Project">
       <div style={{ minHeight: '80vh', backgroundColor: 'black', padding: '40px 50px', color: 'white' }}>
-        <h1 style={{ margin: '0 0 30px 0', fontSize: '32px' }}>
-          History Anda
-        </h1>
+        
+        {/* Header section */}
+        <div style={{ marginBottom: '40px' }}>
+          <h1 style={{ margin: '0 0 5px 0', fontSize: '32px', fontWeight: 'bold' }}>Riwayat</h1>
+          <p style={{ margin: '0', color: '#9CA3AF', fontSize: '16px' }}>Riwayat konten yang terakhir kamu lihat</p>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Header Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 40px', fontSize: '12px', color: '#999', alignItems: 'center' }}>
-            <div style={{ paddingLeft: '120px' }}>JUDUL</div>
-            <div>KATEGORI</div>
-            <div style={{ textAlign: 'center' }}>WAKTU</div>
-            <div></div>
+        {/* Tab and Delete Button Row */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '30px', position: 'relative' }}>
+          <div style={{ display: 'flex', backgroundColor: '#1E1E1E', borderRadius: '24px', padding: '4px' }}>
+            {['Film', 'Musik', 'Berita'].map(tab => (
+              <button 
+                key={tab}
+                onClick={() => {
+                  setActiveCategory(tab)
+                  setSelectedIds(new Set())
+                }}
+                style={{
+                  padding: '8px 32px',
+                  backgroundColor: activeCategory === tab ? '#A855F7' : 'transparent',
+                  color: activeCategory === tab ? 'white' : '#9CA3AF',
+                  border: 'none',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  fontSize: '16px',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
 
-          {/* List */}
-          {historyItems.map((item) => (
-            <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 40px', alignItems: 'center', fontSize: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <img src={item.image} alt={item.title} style={{ width: '100px', height: '80px', objectFit: 'cover', borderRadius: '4px' }} />
-                <span>{item.title}</span>
-              </div>
-              <div>{item.type}</div>
-              <div style={{ textAlign: 'center' }}>{item.time}</div>
-              <div style={{ textAlign: 'right', color: '#999' }}>✖</div>
-            </div>
-          ))}
+          <button 
+            onClick={handleDeleteSelected}
+            style={{
+              position: 'absolute',
+              right: '0',
+              backgroundColor: '#DC2626',
+              color: 'white',
+              border: 'none',
+              padding: '8px 20px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: '500',
+              fontSize: '14px'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            Hapus
+          </button>
         </div>
+
+        {/* List Content */}
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#9CA3AF' }}>Memuat riwayat...</div>
+        ) : filteredItems.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#9CA3AF' }}>Belum ada riwayat konten di kategori ini</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {filteredItems.map(item => (
+              <div 
+                key={item.id} 
+                onClick={() => router.push(`/${item.type.toLowerCase()}/${item.content_id}`)}
+                style={{ display: 'flex', backgroundColor: '#1E1E1E', borderRadius: '12px', overflow: 'hidden', padding: '20px', gap: '24px', alignItems: 'center', cursor: 'pointer', transition: 'transform 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={selectedIds.has(item.content_id)}
+                  onChange={(e) => { e.stopPropagation(); toggleSelection(item.content_id); }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#A855F7' }}
+                />
+                <img src={item.image} style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '8px', backgroundColor: '#000' }} />
+                
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <h3 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: 'bold' }}>{item.title}</h3>
+                  <div style={{ display: 'inline-block', padding: '4px 12px', backgroundColor: '#374151', borderRadius: '4px', fontSize: '14px', marginBottom: '16px', alignSelf: 'flex-start', color: '#D1D5DB' }}>
+                    {item.dateAdded}
+                  </div>
+                  
+                  {activeCategory === 'Berita' ? (
+                    <p style={{ margin: 0, fontSize: '14px', color: '#A855F7', fontWeight: 'bold' }}>DESKRIPSI : <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>{item.description}</span></p>
+                  ) : (
+                    <>
+                      <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#A855F7', fontWeight: 'bold', textTransform: 'uppercase' }}>{activeCategory === 'Musik' ? 'ARTIST' : 'PRODUCERS'} : <span style={{ color: '#9CA3AF', fontWeight: 'normal', textTransform: 'none' }}>{item.producer}</span></p>
+                      <p style={{ margin: 0, fontSize: '14px', color: '#A855F7', fontWeight: 'bold' }}>DESKRIPSI : <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>{item.description}</span></p>
+                    </>
+                  )}
+                </div>
+                
+                <div style={{ padding: '0 10px' }}>
+                  {/* Eye icon instead of Bookmark for History? Or keep same layout. The user said "2 ui ini sama cuma beda fungsi" so I'll keep the same layout, maybe a clock icon instead of bookmark for history */}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A855F7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
       </div>
       <Footer />
     </Layout>

@@ -1,61 +1,59 @@
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { getContents } from '../lib/api'
 
 export default function News() {
-  const newsItems = [
-    {
-      id: 1,
-      slug: 'sekretaris-al-as-dipecat',
-      tag: 'Rekomendasi',
-      title: 'Lagi, Giliran Sekretaris Angkatan Laut AS yang Dipecat Pentagon',
-      meta: 'News - 4 jam lalu',
-      image: '/beritarekom1.svg'
-    },
-    {
-      id: 2,
-      slug: 'fadly-alberto-kungfu',
-      tag: 'Rekomendasi',
-      title: 'Fadly Alberto Ungkap Alasan Menyerang Kungfu Pemain Dewa United U20',
-      meta: 'Bola - 4 jam lalu',
-      image: '/beritarekom2.svg'
-    },
-    {
-      id: 3,
-      slug: 'man-city-menang',
-      tag: 'Rekomendasi',
-      title: 'Man City Hanya Menang 1-0 Lawan Burnley, Pep: Kenapa Harus Frustasi?',
-      meta: 'Bola - 5 jam lalu',
-      image: '/beritarekom3.svg'
-    },
-    {
-      id: 4,
-      slug: 'kronologi-driver-ojol-antapani',
-      tag: 'Rekomendasi',
-      title: 'Kronologi Driver Ojol di Antapani Diduga dilecehkan Remaja, Nyaris Diamuk Massa',
-      meta: 'Nasional - 10 jam lalu',
-      image: '/beritarekom4.svg'
-    },
-  ]
+  const [newsList, setNewsList] = useState([])
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await getContents()
+        const data = res.data || []
+        // Filter Berita (category_id = 1), sort by newest date (created_at), take 4
+        const latestNews = data
+          .filter(item => item.category_id === 1)
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+          .slice(0, 4)
+        
+        setNewsList(latestNews)
+      } catch (err) {
+        console.error('Failed to fetch news:', err)
+      }
+    }
+    fetchData()
+  }, [])
+
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return ''
+    const diffMs = new Date() - new Date(dateString)
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    if (diffHours < 24 && diffHours > 0) return `${diffHours} jam lalu`
+    if (diffHours === 0) return 'Baru saja'
+    const diffDays = Math.floor(diffHours / 24)
+    return `${diffDays} hari lalu`
+  }
 
   return (
     <div style={{ backgroundColor: 'black', padding: '40px 50px', color: 'white' }}>
       <div style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '30px' }}>
-          <h3 style={{ margin: 0, fontSize: '20px' }}>Berita Terkini</h3>
+          <h3 style={{ margin: 0, fontSize: '20px' }}>Berita Terbaru</h3>
           <Link href="/berita" style={{ color: '#ccc', textDecoration: 'none', fontSize: '14px' }}>View All</Link>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-          {newsItems.map((news) => (
+          {newsList.map((news) => (
             <div key={news.id} style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-              <Link href={`/berita/${news.slug}`}>
-                <img src={news.image} alt="News thumbnail" style={{ width: '240px', height: '150px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }} />
+              <Link href={`/berita/${news.id}`}>
+                <img src={news.thumbnail || '/beritarekom1.svg'} alt={news.title} style={{ width: '240px', height: '150px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }} />
               </Link>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{news.tag}</span>
-                <Link href={`/berita/${news.slug}`} style={{ textDecoration: 'none', color: 'white' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#A855F7' }}>{news.genre || 'Nasional'}</span>
+                <Link href={`/berita/${news.id}`} style={{ textDecoration: 'none', color: 'white' }}>
                   <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'normal', lineHeight: '1.4', cursor: 'pointer' }}>{news.title}</h4>
                 </Link>
-                <span style={{ fontSize: '12px', color: '#999' }}>{news.meta}</span>
+                <span style={{ fontSize: '12px', color: '#999' }}>News • {getTimeAgo(news.created_at)} • {news.view || 0} views</span>
               </div>
             </div>
           ))}

@@ -1,7 +1,57 @@
 import Head from 'next/head'
 import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/router'
+import { registerAPI } from '../lib/api'
 
 export default function Register() {
+  const router = useRouter()
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [agreed, setAgreed] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState('')
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+
+    // Validasi frontend
+    if (!username || !email || !password) {
+      setError('Semua field harus diisi.')
+      return
+    }
+    if (password !== confirmPassword) {
+      setError('Password dan konfirmasi password tidak cocok.')
+      return
+    }
+    if (password.length < 6) {
+      setError('Password minimal 6 karakter.')
+      return
+    }
+    if (!agreed) {
+      setError('Anda harus menyetujui Terms of Service.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      await registerAPI(username, email, password)
+      setSuccess('Registrasi berhasil! Anda akan dialihkan ke halaman login...')
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
+    } catch (err) {
+      setError(err.message || 'Registrasi gagal. Coba lagi.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <>
       <Head>
@@ -32,8 +82,38 @@ export default function Register() {
             <h2 className="register-welcome" style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>Create your Account</h2>
             <p className="register-subtext" style={{ fontSize: '14px', color: '#6B7280', marginBottom: '30px' }}>Daftar sekarang untuk mulai menikmati hiburan favoritmu!</p>
 
+            {/* Error message */}
+            {error && (
+              <div style={{
+                backgroundColor: '#FEE2E2',
+                border: '1px solid #FECACA',
+                color: '#B91C1C',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                marginBottom: '12px',
+              }}>
+                ⚠️ {error}
+              </div>
+            )}
+
+            {/* Success message */}
+            {success && (
+              <div style={{
+                backgroundColor: '#D1FAE5',
+                border: '1px solid #6EE7B7',
+                color: '#065F46',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                marginBottom: '12px',
+              }}>
+                ✅ {success}
+              </div>
+            )}
+
             {/* Form */}
-            <form className="register-form">
+            <form className="register-form" onSubmit={handleSubmit}>
               {/* Username Input */}
               <label style={{ display: 'block', marginBottom: '0', fontWeight: '600', color: 'black', fontSize: '12px' }}>Username</label>
               <div className="register-input-group" style={{ display: 'flex', alignItems: 'center', backgroundColor: '#E5E7EB', borderRadius: '8px', padding: '10px 15px', marginBottom: '8px' }}>
@@ -47,6 +127,9 @@ export default function Register() {
                   type="text"
                   placeholder="Masukkan Username"
                   className="register-input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
                   style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px' }}
                 />
               </div>
@@ -64,6 +147,9 @@ export default function Register() {
                   type="email"
                   placeholder="Masukkan Email"
                   className="register-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px' }}
                 />
               </div>
@@ -79,8 +165,11 @@ export default function Register() {
                 </span>
                 <input
                   type="password"
-                  placeholder="Buat Password"
+                  placeholder="Buat Password (min. 6 karakter)"
                   className="register-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px' }}
                 />
               </div>
@@ -98,6 +187,9 @@ export default function Register() {
                   type="password"
                   placeholder="Konfirmasi Password"
                   className="register-input"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
                   style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px' }}
                 />
               </div>
@@ -105,12 +197,30 @@ export default function Register() {
               {/* Terms and Register Button */}
               <div className="register-options" style={{ marginBottom: '20px', fontSize: '12px', color: 'black' }}>
                 <label className="terms-checkbox" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input type="checkbox" style={{ width: '16px', height: '16px' }} />
+                  <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} style={{ width: '16px', height: '16px' }} />
                   <span>Saya setuju dengan <b>Terms of Service</b> dan <b>Privacy Policy</b></span>
                 </label>
               </div>
 
-              <button type="submit" className="register-button" style={{ width: '100%', backgroundColor: '#A855F7', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>Sign Up</button>
+              <button
+                type="submit"
+                className="register-button"
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#A855F7',
+                  color: 'white',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                }}
+              >
+                {loading ? 'Mendaftar...' : 'Sign Up'}
+              </button>
             </form>
 
             {/* Divider */}
@@ -132,7 +242,7 @@ export default function Register() {
               </button>
             </div>
 
-            {/* Login Link - Added just in case navigation is needed */}
+            {/* Login Link */}
             <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px', color: '#6B7280' }}>
               Sudah punya akun? <Link href="/login" style={{ color: '#A855F7', fontWeight: 'bold', textDecoration: 'none' }}>Login</Link>
             </p>

@@ -4,16 +4,15 @@ import Navbar from './Navbar'
 import AdminSidebar from './AdminSidebar'
 
 export default function AdminLayout({ children, title = 'Admin Dashboard' }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarOpen')
-      if (saved !== null) return JSON.parse(saved)
-    }
-    return true // Admin default open
-  })
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
+    const saved = localStorage.getItem('sidebarOpen')
+    if (saved !== null) {
+      setIsSidebarOpen(JSON.parse(saved))
+    }
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
     }
@@ -30,7 +29,10 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }) {
 
       <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'black' }}>
         {/* Admin Sidebar */}
-        {isSidebarOpen && <AdminSidebar />}
+        {isSidebarOpen && <AdminSidebar onClose={() => {
+          setIsSidebarOpen(false)
+          localStorage.setItem('sidebarOpen', JSON.stringify(false))
+        }} />}
 
         {/* Spacer for fixed admin sidebar */}
         {isSidebarOpen && <div style={{ width: '260px', flexShrink: 0 }} />}
@@ -38,6 +40,7 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }) {
         {/* Main content */}
         <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
           <Navbar 
+            isOpen={isSidebarOpen}
             onToggleSidebar={() => {
               const newState = !isSidebarOpen
               setIsSidebarOpen(newState)
@@ -46,7 +49,7 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }) {
             isScrolled={isScrolled} 
           />
           <main 
-            style={{ flex: 1, backgroundColor: '#000', padding: '40px' }}
+            style={{ flex: 1, backgroundColor: '#000', padding: '100px 40px 40px' }}
           >
             {children}
           </main>

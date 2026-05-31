@@ -13,8 +13,16 @@ if (typeof window !== 'undefined') {
   }
 }
 
+import { AudioProvider } from '../contexts/AudioContext'
+import GlobalPlayer from '../components/GlobalPlayer'
+
 function MyApp({ Component, pageProps }) {
-  return <Component {...pageProps} />
+  return (
+    <AudioProvider>
+      <Component {...pageProps} />
+      <GlobalPlayer />
+    </AudioProvider>
+  )
 }
 
 export default MyApp

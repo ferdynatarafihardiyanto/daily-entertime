@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 
-export default function Navbar({ onToggleSidebar, isScrolled = false }) {
+export default function Navbar({ onToggleSidebar, isScrolled = false, isOpen = false }) {
   const [user, setUser] = useState(null)
   const router = useRouter()
 
@@ -15,25 +15,28 @@ export default function Navbar({ onToggleSidebar, isScrolled = false }) {
     <nav style={{
       backgroundColor: isScrolled ? 'black' : 'transparent',
       padding: '12px 30px',
-      borderBottom: isScrolled
-        ? (user?.role === 'admin' ? '2px solid #A855F7' : '1px solid #222')
-        : 'none',
+      borderBottom: '1px solid',
+      borderBottomColor: isScrolled ? '#222' : 'transparent',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      position: 'sticky',
+      position: 'fixed',
       top: 0,
+      left: (user && isOpen) ? '260px' : '0',
+      right: 0,
       zIndex: 50,
-      transition: 'background-color 0.3s ease, border-bottom 0.3s ease'
+      transition: 'all 0.3s ease'
     }}>
       {/* Left: Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <button
-          onClick={onToggleSidebar}
-          style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}
-        >
-          ☰
-        </button>
+        {!isOpen && (
+          <button
+            onClick={onToggleSidebar}
+            style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer' }}
+          >
+            ☰
+          </button>
+        )}
         <img src="/logo%20navbar.png" alt="Logo DE" style={{ height: '38px', borderRadius: '50%' }} />
       </div>
 
@@ -41,7 +44,9 @@ export default function Navbar({ onToggleSidebar, isScrolled = false }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {user ? (
           /* Profile badge - shown when logged in */
-          <div style={{
+          <div 
+            onClick={() => router.push('/profile')}
+            style={{
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
@@ -63,13 +68,18 @@ export default function Navbar({ onToggleSidebar, isScrolled = false }) {
               fontSize: '13px',
               color: 'white',
               flexShrink: 0,
+              overflow: 'hidden',
             }}>
-              {user.name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()}
+              {user.avatar ? (
+                <img src={user.avatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                (user.name || user.username || 'U').split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+              )}
             </div>
             {/* Name */}
             <div>
               <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '10px', lineHeight: 1 }}>
-                {user.role === 'admin' ? 'Admin' : 'Hallo'}
+                {user.roles?.includes('admin') ? 'Admin' : 'Hallo'}
               </div>
               <div style={{
                 color: 'white',
@@ -81,7 +91,7 @@ export default function Navbar({ onToggleSidebar, isScrolled = false }) {
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
               }}>
-                {user.name}
+                {user.name || user.username || 'User'}
               </div>
             </div>
           </div>

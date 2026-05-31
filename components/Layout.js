@@ -5,18 +5,17 @@ import Sidebar from './Sidebar'
 
 export default function Layout({ children, title = 'Final Project', isHome = false }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarOpen')
-      if (saved !== null) return JSON.parse(saved)
-    }
-    return false // Default closed
-  })
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
     const user = localStorage.getItem('currentUser')
     setIsLoggedIn(!!user)
+
+    const saved = localStorage.getItem('sidebarOpen')
+    if (saved !== null) {
+      setIsSidebarOpen(JSON.parse(saved))
+    }
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
@@ -34,14 +33,18 @@ export default function Layout({ children, title = 'Final Project', isHome = fal
 
       <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'black' }}>
         {/* Sidebar - hanya tampil jika sudah login dan sidebar terbuka */}
-        {isLoggedIn && isSidebarOpen && <Sidebar />}
+        {isLoggedIn && isSidebarOpen && <Sidebar onClose={() => {
+          setIsSidebarOpen(false)
+          localStorage.setItem('sidebarOpen', JSON.stringify(false))
+        }} />}
 
         {/* Spacer for fixed sidebar */}
-        {isLoggedIn && isSidebarOpen && <div style={{ width: '190px', flexShrink: 0 }} />}
+        {isLoggedIn && isSidebarOpen && <div style={{ width: '260px', flexShrink: 0 }} />}
 
         {/* Main content */}
         <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
           <Navbar
+            isOpen={isSidebarOpen}
             onToggleSidebar={() => {
               const newState = !isSidebarOpen
               setIsSidebarOpen(newState)
@@ -50,7 +53,7 @@ export default function Layout({ children, title = 'Final Project', isHome = fal
             isScrolled={isScrolled}
           />
           <main
-            style={{ flex: 1, marginTop: isHome ? '-64px' : '0' }}
+            style={{ flex: 1, paddingTop: isHome ? '0' : '64px' }}
           >
             {children}
           </main>
