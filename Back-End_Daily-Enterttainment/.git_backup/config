@@ -1,0 +1,14 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/Dicky-Sihite/Back-End_Daily-Enterttainment.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "fitur2-website-sementara"]
+	remote = origin
+	merge = refs/heads/fitur2-website-sementara
+	vscode-merge-base = origin/main
