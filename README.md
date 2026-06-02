@@ -30,8 +30,8 @@ Pastikan perangkat Anda telah terinstal:
 
 1. **Clone Repository (Jika belum)**
    ```bash
-   git clone https://github.com/pingkydwi/Final_Project.git
-   cd "Final Project"
+   git clone https://github.com/ferdynatarafihardiyanto/daily-entertime.git
+   cd "daily-entertime"
    ```
 
 2. **Install Semua Dependencies**
