@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS content (
   category_id INTEGER,
   thumbnail TEXT,
   content_type VARCHAR(50),
-  url VARCHAR(255),
+  url TEXT,
   views INTEGER DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -58,12 +58,21 @@ CREATE TABLE IF NOT EXISTS content (
 -- Schedules Table
 CREATE TABLE IF NOT EXISTS schedules (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL,
+  content_id INTEGER REFERENCES content(id) ON DELETE CASCADE,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
   title VARCHAR(255) NOT NULL,
-  day VARCHAR(50) NOT NULL,
-  time VARCHAR(50) NOT NULL,
+  description TEXT,
+  poster VARCHAR(255),
+  schedule_type VARCHAR(50) DEFAULT 'one_time',
+  day_of_week INTEGER,
+  start_time TIME,
+  end_time TIME,
+  start_datetime TIMESTAMP,
+  end_datetime TIMESTAMP,
+  recurrence_rule VARCHAR(255),
+  status VARCHAR(50) DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Bookmarks Table
@@ -103,8 +112,7 @@ CREATE TABLE IF NOT EXISTS profile (
 -- Insert Default Roles
 INSERT INTO roles (name, description) VALUES 
   ('user', 'Regular user'),
-  ('admin', 'Administrator'),
-  ('moderator', 'Content moderator')
+  ('admin', 'Administrator')
 ON CONFLICT (name) DO NOTHING;
 
 -- Indexes for Performance

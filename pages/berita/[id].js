@@ -74,7 +74,7 @@ export default function BeritaDetail() {
           </div>
 
           {/* Full Width Text, Aligned Left */}
-          <div style={{ width: '100%', fontSize: '18px', lineHeight: '1.8', color: '#E5E7EB', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ width: '100%', fontSize: '18px', lineHeight: '1.8', color: '#E5E7EB', display: 'flex', flexDirection: 'column', gap: '24px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
             {news.body.split('\n').map((paragraph, index) => (
               <p key={index} style={{ margin: 0 }}>{paragraph}</p>
             ))}

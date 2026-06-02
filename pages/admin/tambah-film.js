@@ -307,9 +307,9 @@ export default function TambahFilm() {
           </div>
           <button 
             onClick={() => setShowForm(true)}
-            style={{ backgroundColor: '#D8B4FE', color: 'black', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+            style={{ backgroundColor: '#A855F7', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
           >
-            + Tambah Film
+            + Tambah Film Baru
           </button>
         </div>
 
