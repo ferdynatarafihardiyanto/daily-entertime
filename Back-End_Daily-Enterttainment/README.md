@@ -25,44 +25,43 @@ npm install
 ```
 
 ### 3. Setup Database
+
+**Opsi 1: Menggunakan pgAdmin (Disarankan - Visual/GUI)**
+1. Buka aplikasi **pgAdmin 4** di laptopmu dan login.
+2. Pada panel sebelah kiri, buka dropdown **Servers** -> **PostgreSQL**.
+3. Klik kanan pada **Databases** -> pilih **Create** -> **Database...**
+4. Isi kolom `Database` dengan nama `final_daily_entertainment` (atau `daily_entertainment` sesuai kemauanmu).
+5. Klik tombol **Save**. Database kosong berhasil dibuat!
+
+**Opsi 2: Menggunakan Terminal / CMD (psql)**
 ```bash
-# Masuk ke PostgreSQL via psql atau pgAdmin
 psql -U postgres
-
 # Buat database
-CREATE DATABASE daily_entertainment;
-
+CREATE DATABASE final_daily_entertainment;
 # Keluar dari psql
 \q
 ```
 
 ### 4. Setup Environment Variables
-Buat file `.env` di dalam folder `Back-End_Daily-Enterttainment` dan sesuaikan nilainya:
-
-```env
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=daily_entertainment
-DB_USER=postgres
-DB_PASSWORD=your_password
-
-# JWT
-JWT_SECRET=your_jwt_secret_key
-JWT_REFRESH_SECRET=your_refresh_secret_key
-
-# Server
-NODE_ENV=development
-PORT=3000
-```
+1. Cari file bernama `.env.example` di dalam folder `Back-End_Daily-Enterttainment`.
+2. *Copy* (salin) file tersebut dan ubah nama salinannya menjadi **`.env`** (tanpa ekstensi .example).
+3. Buka file `.env` tersebut.
+4. **Wajib:** Ubah nilai `DB_PASSWORD` dengan password PostgreSQL milikmu sendiri. Jika kamu mengubah nama database pada langkah 3, ubah juga nilai `DB_NAME`.
 
 ### 5. Run Migration (Setup Database Schema)
-Database yang digunakan menggunakan struktur spesifik untuk fitur Bookmark, History, Premium, dll.
-Jalankan file SQL yang sudah fix:
+Aplikasi butuh tabel khusus untuk fitur Bookmark, History, dll. Kamu harus memasukkan strukturnya (schema):
+
+**Cara via pgAdmin:**
+1. Klik kanan pada database yang baru kamu buat tadi (misal: `final_daily_entertainment`).
+2. Pilih menu **Query Tool**.
+3. Klik icon "Folder" (Open File) pada barisan atas *Query Tool*, lalu cari file `database/schema.sql` di folder project ini.
+4. Setelah file terbuka dan teks SQL-nya muncul, klik icon **Play (Execute/F5)** di atasnya untuk membuat semua tabel secara otomatis.
+
+**Cara via Terminal (Opsional):**
 ```bash
-psql -U postgres -d daily_entertainment -f database/schema.sql
+# Pastikan terminal berada di direktori Back-End_Daily-Enterttainment
+psql -U postgres -d final_daily_entertainment -f database/schema.sql
 ```
-*Catatan: Pastikan untuk menjalankan perintah di atas dari dalam direktori Back-End_Daily-Enterttainment.*
 
 ### 6. Generate Admin & Data Awal (Opsional)
 Ada beberapa script yang disediakan di folder `scripts/` untuk membantu setup awal:
