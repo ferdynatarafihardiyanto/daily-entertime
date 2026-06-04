@@ -2,9 +2,15 @@ import Layout from '../components/Layout'
 import Footer from '../components/Footer'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { getContents, addBookmark, removeBookmark, getBookmarks, isLoggedIn } from '../lib/api'
+import { getBookmarks, addBookmark, removeBookmark, isLoggedIn } from '../lib/api'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents } from '../store/contentSlice'
 
 export default function Film() {
+  const dispatch = useDispatch()
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+
   const [searchQuery, setSearchQuery] = useState('')
   const [filmItems, setFilmItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -43,56 +49,57 @@ export default function Film() {
   ]
 
   useEffect(() => {
-    async function fetchFilms() {
-      try {
-        const data = await getContents()
-        if (data.data && data.data.length > 0) {
-          // Filter hanya konten kategori film (category_id: 2)
-          const fetchedFilms = data.data
-            .filter(item => item.category_id === 2)
-            .map((item) => {
-              let sutradara = 'Tidak diketahui'
-              let sinopsis = 'Film'
-              if (item.description && item.description.includes('Sutradara:')) {
-                const parts = item.description.split('\nSinopsis: ')
-                sutradara = parts[0].replace('Sutradara: ', '').trim()
-                if (parts.length > 1) {
-                  sinopsis = parts[1].trim()
-                }
-              } else if (item.description) {
-                sinopsis = item.description
-              }
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
+    }
+  }, [contentStatus, dispatch])
 
-              // Truncate sinopsis for "lite" version (e.g., max 25 words)
-              const words = sinopsis.split(' ')
-              const liteSinopsis = words.length > 20 ? words.slice(0, 20).join(' ') + '...' : sinopsis
-
-              return {
-                id: item.id,
-                slug: item.id.toString(),
-                title: item.title,
-                director: sutradara,
-                synopsis: liteSinopsis,
-                image: item.thumbnail || '/filmmiracle.svg',
+  useEffect(() => {
+    if (contentStatus === 'loading' || contentStatus === 'idle') {
+      setLoading(true)
+    } else if (contentStatus === 'succeeded' || contentStatus === 'failed') {
+      if (contents && contents.length > 0) {
+        const fetchedFilms = contents
+          .filter(item => item.category_id === 2)
+          .map((item) => {
+            let sutradara = 'Tidak diketahui'
+            let sinopsis = 'Film'
+            if (item.description && item.description.includes('Sutradara:')) {
+              const parts = item.description.split('\nSinopsis: ')
+              sutradara = parts[0].replace('Sutradara: ', '').trim()
+              if (parts.length > 1) {
+                sinopsis = parts[1].trim()
               }
-            })
-          
-          if (fetchedFilms.length > 0) {
-            setFilmItems(fetchedFilms)
-          } else {
-            setFilmItems(fallbackFilms)
-          }
+            } else if (item.description) {
+              sinopsis = item.description
+            }
+
+            const words = sinopsis.split(' ')
+            const liteSinopsis = words.length > 20 ? words.slice(0, 20).join(' ') + '...' : sinopsis
+
+            return {
+              id: item.id,
+              slug: item.id.toString(),
+              title: item.title,
+              director: sutradara,
+              synopsis: liteSinopsis,
+              image: item.thumbnail || '/filmmiracle.svg',
+            }
+          })
+        
+        if (fetchedFilms.length > 0) {
+          setFilmItems(fetchedFilms)
         } else {
           setFilmItems(fallbackFilms)
         }
-      } catch (err) {
-        console.log('Backend belum aktif, menggunakan data dummy:', err.message)
+      } else {
         setFilmItems(fallbackFilms)
-      } finally {
-        setLoading(false)
       }
+      setLoading(false)
     }
+  }, [contents, contentStatus])
 
+  useEffect(() => {
     async function fetchBookmarksData() {
       if (!isLoggedIn()) return
       try {
@@ -106,9 +113,21 @@ export default function Film() {
       }
     }
 
-    fetchFilms()
     fetchBookmarksData()
-  }, [])
+
+    const onFocus = () => {
+      if (contentStatus === 'succeeded' || contentStatus === 'failed') {
+        dispatch(fetchContents()) // Refresh data softly
+      }
+      fetchBookmarksData()
+    }
+
+    window.addEventListener('focus', onFocus)
+    
+    return () => {
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [contentStatus, dispatch])
 
   const filteredFilms = filmItems.filter(film => 
     film.title.toLowerCase().includes(searchQuery.toLowerCase())

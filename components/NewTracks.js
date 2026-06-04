@@ -1,37 +1,42 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getContents, addBookmark } from '../lib/api'
+import { addBookmark } from '../lib/api'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents } from '../store/contentSlice'
 
 export default function NewTracks() {
+  const dispatch = useDispatch()
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+
   const [tracks, setTracks] = useState([])
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await getContents()
-        const data = res.data || []
-        // Filter Musik (category_id = 3), sort by views descending, take 4
-        const topTracks = data
-          .filter(item => item.category_id === 3)
-          .sort((a, b) => (b.view || 0) - (a.view || 0))
-          .map(item => {
-            let artist = 'Unknown Artist'
-            if (item.description && item.description.includes('Artis:')) {
-              artist = item.description.split('\n')[0].replace('Artis: ', '').trim()
-            } else if (item.description) {
-              artist = item.description.substring(0, 50) + '...'
-            }
-            return { ...item, artist }
-          })
-          .slice(0, 4)
-        
-        setTracks(topTracks)
-      } catch (err) {
-        console.error('Failed to fetch tracks:', err)
-      }
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
     }
-    fetchData()
-  }, [])
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (contentStatus === 'succeeded' || contentStatus === 'failed') {
+      const data = contents || []
+      const topTracks = data
+        .filter(item => item.category_id === 3)
+        .sort((a, b) => (b.view || 0) - (a.view || 0))
+        .map(item => {
+          let artist = 'Unknown Artist'
+          if (item.description && item.description.includes('Artis:')) {
+            artist = item.description.split('\n')[0].replace('Artis: ', '').trim()
+          } else if (item.description) {
+            artist = item.description.substring(0, 50) + '...'
+          }
+          return { ...item, artist }
+        })
+        .slice(0, 4)
+      
+      setTracks(topTracks)
+    }
+  }, [contents, contentStatus])
 
   const handleBookmark = async (id) => {
     try {

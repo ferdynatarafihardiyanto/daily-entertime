@@ -1,50 +1,54 @@
 import Layout from '../components/Layout'
 import Footer from '../components/Footer'
 import { useState, useEffect } from 'react'
-import { getHistories, removeHistory, isLoggedIn } from '../lib/api'
+import { removeHistory, isLoggedIn } from '../lib/api'
 import { useRouter } from 'next/router'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchHistoryData, invalidateHistory } from '../store/userSlice'
 
 export default function History() {
   const router = useRouter()
+  const dispatch = useDispatch()
+  const historyData = useSelector((state) => state.user.history)
+  const historyStatus = useSelector((state) => state.user.historyStatus)
+
   const [historyItems, setHistoryItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('Film')
   const [selectedIds, setSelectedIds] = useState(new Set())
+  useEffect(() => {
+    if (!isLoggedIn()) {
+      setLoading(false)
+      return
+    }
+    if (historyStatus === 'idle') {
+      dispatch(fetchHistoryData())
+    }
+  }, [historyStatus, dispatch])
 
   useEffect(() => {
-    async function fetchHistory() {
-      if (!isLoggedIn()) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        const data = await getHistories()
-        if (data.data && data.data.length > 0) {
-          const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
-          const items = data.data.map((item) => ({
-            id: item.history_id || item.id,
-            content_id: item.content_id || item.id,
-            title: item.title || 'Untitled',
-            type: categoryNames[item.category_id] || item.category || 'Lainnya',
-            dateAdded: item.viewed_at ? new Date(item.viewed_at).getFullYear().toString() : '2026',
-            producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
-            description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
-            image: item.thumbnail || '/filmmiracle.svg',
-          }))
-          setHistoryItems(items)
-        } else {
-          setHistoryItems([])
-        }
-      } catch (err) {
-        console.log('Failed to fetch history:', err.message)
+    if (historyStatus === 'loading' || historyStatus === 'idle') {
+      if (isLoggedIn()) setLoading(true)
+    } else if (historyStatus === 'succeeded' || historyStatus === 'failed') {
+      if (historyData && historyData.length > 0) {
+        const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
+        const items = historyData.map((item) => ({
+          id: item.history_id || item.id,
+          content_id: item.content_id || item.id,
+          title: item.title || 'Untitled',
+          type: categoryNames[item.category_id] || item.category || 'Lainnya',
+          dateAdded: item.viewed_at ? new Date(item.viewed_at).getFullYear().toString() : '2026',
+          producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
+          description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
+          image: item.thumbnail || '/filmmiracle.svg',
+        }))
+        setHistoryItems(items)
+      } else {
         setHistoryItems([])
-      } finally {
-        setLoading(false)
       }
+      setLoading(false)
     }
-    fetchHistory()
-  }, [])
+  }, [historyData, historyStatus])
 
   const filteredItems = historyItems.filter(item => item.type === activeCategory)
 
@@ -70,8 +74,8 @@ export default function History() {
       const deletePromises = Array.from(selectedIds).map(contentId => removeHistory(contentId))
       await Promise.all(deletePromises)
       
-      setHistoryItems(historyItems.filter(item => !selectedIds.has(item.content_id)))
       setSelectedIds(new Set())
+      dispatch(invalidateHistory()) // Refresh Redux state after delete
       alert('Berhasil menghapus item.')
     } catch (err) {
       alert('Gagal menghapus beberapa item: ' + err.message)

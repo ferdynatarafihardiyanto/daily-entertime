@@ -2,9 +2,15 @@ import Layout from '../components/Layout'
 import Footer from '../components/Footer'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { getContents, addBookmark, removeBookmark, getBookmarks, isLoggedIn } from '../lib/api'
+import { getBookmarks, addBookmark, removeBookmark, isLoggedIn } from '../lib/api'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents } from '../store/contentSlice'
 
 export default function Berita() {
+  const dispatch = useDispatch()
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+
   const [searchQuery, setSearchQuery] = useState('')
   const [newsItems, setNewsItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -48,38 +54,40 @@ export default function Berita() {
   ]
 
   useEffect(() => {
-    async function fetchNews() {
-      try {
-        const data = await getContents()
-        if (data.data && data.data.length > 0) {
-          // Filter hanya konten kategori berita (category_id: 1)
-          const beritaItems = data.data
-            .filter(item => item.category_id === 1)
-            .map((item) => ({
-              id: item.id,
-              slug: item.id.toString(),
-              title: item.title,
-              date: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja',
-              description: item.description || 'Tidak ada deskripsi',
-              image: item.thumbnail || '/beritarekom1.svg',
-            }))
-          
-          if (beritaItems.length > 0) {
-            setNewsItems(beritaItems)
-          } else {
-            setNewsItems(fallbackNews)
-          }
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
+    }
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (contentStatus === 'loading' || contentStatus === 'idle') {
+      setLoading(true)
+    } else if (contentStatus === 'succeeded' || contentStatus === 'failed') {
+      if (contents && contents.length > 0) {
+        const beritaItems = contents
+          .filter(item => item.category_id === 1)
+          .map((item) => ({
+            id: item.id,
+            slug: item.id.toString(),
+            title: item.title,
+            date: item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja',
+            description: item.description || 'Tidak ada deskripsi',
+            image: item.thumbnail || '/beritarekom1.svg',
+          }))
+        
+        if (beritaItems.length > 0) {
+          setNewsItems(beritaItems)
         } else {
           setNewsItems(fallbackNews)
-
         }
-      } catch (err) {
-        console.log('Backend belum aktif, menggunakan data dummy:', err.message)
+      } else {
         setNewsItems(fallbackNews)
-      } finally {
-        setLoading(false)
       }
+      setLoading(false)
     }
+  }, [contents, contentStatus])
+
+  useEffect(() => {
 
     async function fetchBookmarksData() {
       if (!isLoggedIn()) return
@@ -94,9 +102,21 @@ export default function Berita() {
       }
     }
 
-    fetchNews()
     fetchBookmarksData()
-  }, [])
+
+    const onFocus = () => {
+      if (contentStatus === 'succeeded' || contentStatus === 'failed') {
+        dispatch(fetchContents())
+      }
+      fetchBookmarksData()
+    }
+
+    window.addEventListener('focus', onFocus)
+    
+    return () => {
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [contentStatus, dispatch])
 
   const filteredNews = newsItems.filter(news => 
     news.title.toLowerCase().includes(searchQuery.toLowerCase())

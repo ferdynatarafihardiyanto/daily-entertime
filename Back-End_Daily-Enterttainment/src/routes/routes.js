@@ -7,7 +7,7 @@ const { createContent, getAllContents, getContentById, updateContent, deleteCont
 const { addBookmark, removeBookmark, getUserBookmarks } = require('../controllers/bookmarkController');
 const { trackHistory, getUserHistory, removeHistory } = require('../controllers/historyController');
 const { createSchedule, getSchedules, deleteSchedule } = require('../controllers/scheduleController');
-const { getAllUsers, createUser, updateUser } = require('../controllers/userController');
+const { getAllUsers, createUser, updateUser, deleteUser } = require('../controllers/userController');
 const {
   HTTP_STATUS,
   SUCCESS_MESSAGES,
@@ -61,6 +61,14 @@ router.put(
   '/users/:id',
   authenticateToken,
   updateUser
+);
+
+// DELETE USER (Admin only)
+router.delete(
+  '/users/:id',
+  authenticateToken,
+  authorizeRoles('admin'),
+  deleteUser
 );
 
 // USER route

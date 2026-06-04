@@ -1,33 +1,41 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect } from 'react'
-import { getSchedules, createSchedule, getContents } from '../../lib/api'
+import { createSchedule } from '../../lib/api'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents, fetchSchedulesData, invalidateSchedules } from '../../store/contentSlice'
 
 export default function JadwalMingguan() {
-  const [activeFilter, setActiveFilter] = useState('Film')
+  const dispatch = useDispatch()
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+  
+  const schedulesData = useSelector((state) => state.content.schedules)
+  const schedulesStatus = useSelector((state) => state.content.schedulesStatus)
+
   const [currentDate, setCurrentDate] = useState(new Date())
   const [schedules, setSchedules] = useState([])
-  const [contents, setContents] = useState([])
   
   // Modal States
   const [showModal, setShowModal] = useState(false)
   const [newSchedule, setNewSchedule] = useState({ category: 'Film', contentId: '', date: '' })
 
   useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
-    try {
-      const [schedRes, contentRes] = await Promise.all([
-        getSchedules(),
-        getContents()
-      ])
-      if (schedRes.data) setSchedules(schedRes.data)
-      if (contentRes.data) setContents(contentRes.data)
-    } catch (err) {
-      console.error('Failed to fetch data', err)
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
     }
-  }
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (schedulesStatus === 'idle') {
+      dispatch(fetchSchedulesData())
+    }
+  }, [schedulesStatus, dispatch])
+
+  useEffect(() => {
+    if (schedulesStatus === 'succeeded' || schedulesStatus === 'failed') {
+      setSchedules(schedulesData || [])
+    }
+  }, [schedulesData, schedulesStatus])
 
   const handleNextMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
@@ -111,8 +119,8 @@ export default function JadwalMingguan() {
         title: contents.find(c => c.id == newSchedule.contentId)?.title || 'Jadwal',
       })
       alert("Jadwal berhasil ditambahkan!")
+      dispatch(invalidateSchedules())
       setShowModal(false)
-      fetchData()
     } catch (err) {
       alert("Gagal menambahkan jadwal: " + err.message)
     }
@@ -126,25 +134,25 @@ export default function JadwalMingguan() {
         
         {/* Top Bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-          {/* Filters */}
+          {/* Keterangan Warna */}
           <div style={{ display: 'flex', gap: '10px' }}>
             {['Film', 'Musik', 'Berita'].map(f => (
-              <button 
+              <div 
                 key={f}
-                onClick={() => setActiveFilter(f)}
                 style={{ 
-                  backgroundColor: activeFilter === f ? (f === 'Film' ? '#FBCFE8' : f === 'Musik' ? '#D1FAE5' : '#FEF08A') : 'white',
+                  backgroundColor: f === 'Film' ? '#FBCFE8' : f === 'Musik' ? '#D1FAE5' : '#FEF08A',
                   color: 'black',
-                  border: 'none',
-                  padding: '8px 24px',
+                  padding: '6px 16px',
                   borderRadius: '20px',
                   fontWeight: 'bold',
-                  cursor: 'pointer',
-                  fontSize: '14px'
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 {f}
-              </button>
+              </div>
             ))}
           </div>
 
@@ -153,8 +161,8 @@ export default function JadwalMingguan() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h2>
               <div style={{ display: 'flex', gap: '5px' }}>
-                <button onClick={handlePrevMonth} style={{ backgroundColor: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', color: 'black' }}>&lt;</button>
-                <button onClick={handleNextMonth} style={{ backgroundColor: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', color: 'black' }}>&gt;</button>
+                <button onClick={handlePrevMonth} style={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '4px', padding: '4px 10px', cursor: 'pointer', color: 'white', fontWeight: 'bold' }}>&lt;</button>
+                <button onClick={handleNextMonth} style={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '4px', padding: '4px 10px', cursor: 'pointer', color: 'white', fontWeight: 'bold' }}>&gt;</button>
               </div>
             </div>
             <button onClick={() => setShowModal(true)} style={{ 
@@ -168,9 +176,9 @@ export default function JadwalMingguan() {
         </div>
 
         {/* Calendar Grid */}
-        <div style={{ backgroundColor: 'white', borderRadius: '16px', overflow: 'hidden' }}>
+        <div style={{ backgroundColor: '#111', borderRadius: '16px', overflow: 'hidden', border: '1px solid #333' }}>
           {/* Days Header */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', backgroundColor: 'white', borderBottom: '1px solid #E5E7EB' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', backgroundColor: '#1A1A1A', borderBottom: '1px solid #333' }}>
             {['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'].map(day => (
               <div key={day} style={{ padding: '15px', textAlign: 'center', color: '#9CA3AF', fontSize: '12px', fontWeight: 'bold' }}>{day}</div>
             ))}
@@ -180,7 +188,7 @@ export default function JadwalMingguan() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
             {calendarDays.map((day, i) => {
               // Get category of the first event if exists
-              let bg = 'white'
+              let bg = '#111'
               if (!day.prevMonth && !day.nextMonth && day.events?.length > 0) {
                 const firstEventCat = contents.find(c => c.id === day.events[0].content_id)?.category_id
                 if (firstEventCat) bg = categoryColors[firstEventCat]
@@ -189,12 +197,12 @@ export default function JadwalMingguan() {
               return (
                 <div key={i} style={{ 
                   height: '120px', 
-                  borderRight: '1px solid #E5E7EB', 
-                  borderBottom: '1px solid #E5E7EB',
+                  borderRight: '1px solid #333', 
+                  borderBottom: '1px solid #333',
                   padding: '10px',
                   backgroundColor: bg
                 }}>
-                  <div style={{ color: day.prevMonth || day.nextMonth ? '#93C5FD' : 'black', fontWeight: 'bold', fontSize: '14px', marginBottom: '10px' }}>
+                  <div style={{ color: day.prevMonth || day.nextMonth ? '#4B5563' : (bg === '#111' ? 'white' : 'black'), fontWeight: 'bold', fontSize: '14px', marginBottom: '10px' }}>
                     {day.date}
                   </div>
                   {day.events && day.events.map((ev, idx) => {

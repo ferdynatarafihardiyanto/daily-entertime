@@ -1,28 +1,32 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getContents } from '../lib/api'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents } from '../store/contentSlice'
 
 export default function Leaderboard() {
+  const dispatch = useDispatch()
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+  
   const [films, setFilms] = useState([])
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await getContents()
-        const data = res.data || []
-        // Filter Film (category_id = 2), sort by views descending, take 4
-        const topFilms = data
-          .filter(item => item.category_id === 2)
-          .sort((a, b) => (b.view || 0) - (a.view || 0))
-          .slice(0, 4)
-        
-        setFilms(topFilms)
-      } catch (err) {
-        console.error('Failed to fetch films:', err)
-      }
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
     }
-    fetchData()
-  }, [])
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (contentStatus === 'succeeded' || contentStatus === 'failed') {
+      const data = contents || []
+      const topFilms = data
+        .filter(item => item.category_id === 2)
+        .sort((a, b) => (b.view || 0) - (a.view || 0))
+        .slice(0, 4)
+      
+      setFilms(topFilms)
+    }
+  }, [contents, contentStatus])
 
   return (
     <div id="leaderboard" style={{ backgroundColor: 'black', padding: '40px 50px', color: 'white' }}>

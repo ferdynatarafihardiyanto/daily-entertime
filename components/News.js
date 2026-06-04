@@ -1,28 +1,32 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getContents } from '../lib/api'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents } from '../store/contentSlice'
 
 export default function News() {
+  const dispatch = useDispatch()
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+
   const [newsList, setNewsList] = useState([])
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await getContents()
-        const data = res.data || []
-        // Filter Berita (category_id = 1), sort by newest date (created_at), take 4
-        const latestNews = data
-          .filter(item => item.category_id === 1)
-          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
-          .slice(0, 4)
-        
-        setNewsList(latestNews)
-      } catch (err) {
-        console.error('Failed to fetch news:', err)
-      }
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
     }
-    fetchData()
-  }, [])
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (contentStatus === 'succeeded' || contentStatus === 'failed') {
+      const data = contents || []
+      const latestNews = data
+        .filter(item => item.category_id === 1)
+        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+        .slice(0, 4)
+      
+      setNewsList(latestNews)
+    }
+  }, [contents, contentStatus])
 
   const getTimeAgo = (dateString) => {
     if (!dateString) return ''

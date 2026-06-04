@@ -1,10 +1,18 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect, useRef } from 'react'
-import { createContent, getContents, deleteContentAPI, updateContentAPI } from '../../lib/api'
+import { createContent, deleteContentAPI, updateContentAPI } from '../../lib/api'
 import { useRouter } from 'next/router'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents, invalidateContent } from '../../store/contentSlice'
 
 export default function TambahMusik() {
   const router = useRouter()
+  const dispatch = useDispatch()
+  
+  // Data dari Redux
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+
   const [showForm, setShowForm] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [musics, setMusics] = useState([])
@@ -28,12 +36,19 @@ export default function TambahMusik() {
   const audioInputRef = useRef(null)
   const coverInputRef = useRef(null)
 
-  const fetchMusics = async () => {
-    try {
+  useEffect(() => {
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
+    }
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (contentStatus === 'loading' || contentStatus === 'idle') {
       setIsLoading(true)
-      const result = await getContents()
-      if (result.data) {
-        const mappedMusics = result.data
+    } else {
+      setIsLoading(false)
+      if (contents) {
+        const mappedMusics = contents
           .filter(item => item.category_id === 3)
           .map(item => {
             let artist = 'Tidak diketahui'
@@ -54,16 +69,8 @@ export default function TambahMusik() {
           })
         setMusics(mappedMusics)
       }
-    } catch (err) {
-      console.error("Gagal mengambil data musik:", err)
-    } finally {
-      setIsLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchMusics()
-  }, [])
+  }, [contents, contentStatus])
 
   const handleAudioChange = (e) => {
     const file = e.target.files[0];
@@ -131,7 +138,8 @@ export default function TambahMusik() {
       try {
         await deleteContentAPI(id)
         alert('Musik berhasil dihapus!')
-        fetchMusics()
+        dispatch(invalidateContent())
+        dispatch(fetchContents())
       } catch (error) {
         alert('Gagal menghapus musik: ' + error.message)
       }
@@ -165,8 +173,9 @@ export default function TambahMusik() {
         });
         alert("Berhasil! Musik berhasil ditambahkan ke database.");
       }
+      dispatch(invalidateContent())
+      dispatch(fetchContents())
       resetForm();
-      fetchMusics();
     } catch (err) {
       if (err.message && (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('sesi'))) {
         alert("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");

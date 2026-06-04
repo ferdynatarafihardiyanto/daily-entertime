@@ -1,10 +1,18 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect, useRef } from 'react'
-import { createContent, getContents, deleteContentAPI, updateContentAPI } from '../../lib/api'
+import { createContent, deleteContentAPI, updateContentAPI } from '../../lib/api'
 import { useRouter } from 'next/router'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents, invalidateContent } from '../../store/contentSlice'
 
 export default function TambahBerita() {
   const router = useRouter()
+  const dispatch = useDispatch()
+  
+  // Data dari Redux
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+
   const [showForm, setShowForm] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [news, setNews] = useState([])
@@ -21,12 +29,19 @@ export default function TambahBerita() {
   const [thumbnailFileName, setThumbnailFileName] = useState('')
   const fileInputRef = useRef(null)
 
-  const fetchNews = async () => {
-    try {
+  useEffect(() => {
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
+    }
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (contentStatus === 'loading' || contentStatus === 'idle') {
       setIsLoading(true)
-      const result = await getContents()
-      if (result.data) {
-        const mappedNews = result.data
+    } else {
+      setIsLoading(false)
+      if (contents) {
+        const mappedNews = contents
           .filter(item => item.category_id === 1)
           .map(item => ({
             id: item.id,
@@ -39,16 +54,8 @@ export default function TambahBerita() {
           }))
         setNews(mappedNews)
       }
-    } catch (err) {
-      console.error("Gagal mengambil data berita:", err)
-    } finally {
-      setIsLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchNews()
-  }, [])
+  }, [contents, contentStatus])
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -85,7 +92,8 @@ export default function TambahBerita() {
       try {
         await deleteContentAPI(id)
         alert('Berita berhasil dihapus!')
-        fetchNews()
+        dispatch(invalidateContent())
+        dispatch(fetchContents())
       } catch (error) {
         alert('Gagal menghapus berita: ' + error.message)
       }
@@ -116,8 +124,9 @@ export default function TambahBerita() {
         });
         alert("Berhasil! Berita berhasil ditambahkan ke database.");
       }
+      dispatch(invalidateContent())
+      dispatch(fetchContents())
       resetForm();
-      fetchNews();
     } catch (err) {
       if (err.message && (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('sesi'))) {
         alert("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");

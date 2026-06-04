@@ -115,8 +115,35 @@ async function updateUser(req, res) {
   }
 }
 
+async function deleteUser(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (req.user.id == id) {
+      return res.status(400).json(createErrorResponse('Tidak dapat menghapus akun sendiri saat sedang login'));
+    }
+
+    const checkResult = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json(createErrorResponse('Pengguna tidak ditemukan'));
+    }
+
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+
+    return res.status(HTTP_STATUS.OK).json(
+      createSuccessResponse(null, 'Berhasil menghapus pengguna')
+    );
+  } catch (error) {
+    console.error('Delete user error:', error);
+    return res.status(HTTP_STATUS.SERVER_ERROR).json(
+      createErrorResponse('Terjadi kesalahan pada server')
+    );
+  }
+}
+
 module.exports = {
   getAllUsers,
   createUser,
-  updateUser
+  updateUser,
+  deleteUser
 };

@@ -1,10 +1,18 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect, useRef } from 'react'
-import { createContent, getContents, deleteContentAPI, updateContentAPI } from '../../lib/api'
+import { createContent, deleteContentAPI, updateContentAPI } from '../../lib/api'
 import { useRouter } from 'next/router'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents, invalidateContent } from '../../store/contentSlice'
 
 export default function TambahFilm() {
   const router = useRouter()
+  const dispatch = useDispatch()
+  
+  // Data dari Redux
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+
   const [showForm, setShowForm] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [films, setFilms] = useState([])
@@ -24,14 +32,19 @@ export default function TambahFilm() {
   const [thumbnailFileName, setThumbnailFileName] = useState('')
   const fileInputRef = useRef(null)
 
-  // Fetch real data on mount
-  const fetchFilms = async () => {
-    try {
+  useEffect(() => {
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
+    }
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (contentStatus === 'loading' || contentStatus === 'idle') {
       setIsLoading(true)
-      const result = await getContents()
-      if (result.data) {
-        // Map backend contents to UI structure
-          const mappedFilms = result.data
+    } else {
+      setIsLoading(false)
+      if (contents) {
+        const mappedFilms = contents
           .filter(item => item.category_id === 2)
           .map(item => {
             let sutradara = 'Tidak diketahui'
@@ -47,21 +60,13 @@ export default function TambahFilm() {
               date: new Date(item.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
               status: 'PUBLISHED',
               image: item.thumbnail || '/filmagaklain.svg',
-              raw: item // Keep raw data for editing
+              raw: item
             }
           })
         setFilms(mappedFilms)
       }
-    } catch (err) {
-      console.error("Gagal mengambil data film:", err)
-    } finally {
-      setIsLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchFilms()
-  }, [])
+  }, [contents, contentStatus])
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -150,7 +155,8 @@ export default function TambahFilm() {
       try {
         await deleteContentAPI(id)
         alert('Film berhasil dihapus!')
-        fetchFilms() // Refresh list
+        dispatch(invalidateContent()) // Force fetch from server
+        dispatch(fetchContents())
       } catch (error) {
         alert('Gagal menghapus film: ' + error.message)
       }
@@ -187,8 +193,9 @@ export default function TambahFilm() {
         });
         alert("Berhasil! Film berhasil ditambahkan ke database.");
       }
+      dispatch(invalidateContent());
+      dispatch(fetchContents()); // Refresh data from server
       resetForm();
-      fetchFilms(); // Refresh data
     } catch (err) {
       if (err.message && (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('sesi'))) {
         alert("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");

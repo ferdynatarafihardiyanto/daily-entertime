@@ -1,9 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
-import { getSchedules, getContents } from '../lib/api'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents, fetchSchedulesData } from '../store/contentSlice'
 
 export default function Schedule() {
   const router = useRouter()
+  const dispatch = useDispatch()
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+  
+  const schedulesRedux = useSelector((state) => state.content.schedules)
+  const schedulesStatus = useSelector((state) => state.content.schedulesStatus)
+
   const [schedules, setSchedules] = useState([])
   
   // Drag to scroll states
@@ -38,15 +46,22 @@ export default function Schedule() {
   }
 
   useEffect(() => {
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
+    }
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (schedulesStatus === 'idle') {
+      dispatch(fetchSchedulesData())
+    }
+  }, [schedulesStatus, dispatch])
+
+  useEffect(() => {
     async function fetchData() {
       try {
-        const [schedRes, contentRes] = await Promise.all([
-          getSchedules(),
-          getContents()
-        ])
-        
-        const rawSchedules = schedRes.data || []
-        const rawContents = contentRes.data || []
+        const rawSchedules = schedulesRedux || []
+        const rawContents = contents || []
         
         // Build 7 days starting from current Monday
         const curr = new Date()
@@ -97,8 +112,12 @@ export default function Schedule() {
         console.error('Gagal mengambil jadwal:', err)
       }
     }
-    fetchData()
-  }, [])
+    
+    if ((contentStatus === 'succeeded' || contentStatus === 'failed') && 
+        (schedulesStatus === 'succeeded' || schedulesStatus === 'failed')) {
+      fetchData()
+    }
+  }, [contents, contentStatus, schedulesRedux, schedulesStatus])
 
   if (schedules.length === 0) {
     return <div style={{ backgroundColor: '#0B0F19', padding: '60px 20px', color: 'white', textAlign: 'center' }}>

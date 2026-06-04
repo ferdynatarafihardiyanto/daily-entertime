@@ -1,7 +1,7 @@
 import { useAudio } from '../contexts/AudioContext';
 
 export default function GlobalPlayer() {
-  const { currentTrack, isPlaying, currentTime, duration, togglePlay, stopTrack, seek } = useAudio();
+  const { currentTrack, isPlaying, currentTime, duration, togglePlay, stopTrack, seek, nextTrack, previousTrack } = useAudio();
 
   if (!currentTrack) return null;
 
@@ -40,7 +40,7 @@ export default function GlobalPlayer() {
       {/* Center: Controls & Progress */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '40%', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <button onClick={() => seek(Math.max(0, currentTime - 10))} style={{ background: 'none', border: 'none', color: '#A3A3A3', cursor: 'pointer' }}>
+          <button onClick={previousTrack} style={{ background: 'none', border: 'none', color: '#A3A3A3', cursor: 'pointer' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M19 20L9 12L19 4V20Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><path d="M5 19V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           </button>
           
@@ -52,7 +52,7 @@ export default function GlobalPlayer() {
             )}
           </button>
           
-          <button onClick={() => seek(Math.min(duration, currentTime + 10))} style={{ background: 'none', border: 'none', color: '#A3A3A3', cursor: 'pointer' }}>
+          <button onClick={nextTrack} style={{ background: 'none', border: 'none', color: '#A3A3A3', cursor: 'pointer' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 4L15 12L5 20V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><path d="M19 5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           </button>
         </div>

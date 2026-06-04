@@ -12,7 +12,7 @@ export default function MusicDetail() {
   const [error, setError] = useState('')
   
   // Use Global Audio Context
-  const { currentTrack, isPlaying, currentTime, duration, playTrack, togglePlay, seek } = useAudio()
+  const { currentTrack, isPlaying, currentTime, duration, playTrack, togglePlay, seek, nextTrack, previousTrack, playlist } = useAudio()
 
   useEffect(() => {
     if (!id) return
@@ -67,6 +67,13 @@ export default function MusicDetail() {
       }
     }
   }, [track]) // Only run when track data is successfully loaded
+
+  // Redirect to new track page if track is changed (e.g. from GlobalPlayer next/prev)
+  useEffect(() => {
+    if (currentTrack && currentTrack.slug && track && track.id !== currentTrack.id) {
+      router.replace(`/musik/${currentTrack.slug}`);
+    }
+  }, [currentTrack, track, router]);
 
   const handlePlayClick = () => {
     if (currentTrack && currentTrack.id === track.id) {
@@ -154,7 +161,7 @@ export default function MusicDetail() {
 
           {/* Playback Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
-            <button disabled={!track.audioUrl || (currentTrack && currentTrack.id !== track.id)} onClick={() => seek(Math.max(0, displayCurrentTime - 10))} style={{ background: 'transparent', border: 'none', cursor: track.audioUrl ? 'pointer' : 'not-allowed', opacity: track.audioUrl ? 1 : 0.5 }}>
+            <button disabled={!track.audioUrl || (currentTrack && currentTrack.id !== track.id)} onClick={previousTrack} style={{ background: 'transparent', border: 'none', cursor: track.audioUrl ? 'pointer' : 'not-allowed', opacity: track.audioUrl ? 1 : 0.5 }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                 <path d="M19 20L9 12L19 4V20Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
                 <path d="M5 19V5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
@@ -175,7 +182,7 @@ export default function MusicDetail() {
                 </svg>
               )}
             </button>
-            <button disabled={!track.audioUrl || (currentTrack && currentTrack.id !== track.id)} onClick={() => seek(Math.min(displayDuration, displayCurrentTime + 10))} style={{ background: 'transparent', border: 'none', cursor: track.audioUrl ? 'pointer' : 'not-allowed', opacity: track.audioUrl ? 1 : 0.5 }}>
+            <button disabled={!track.audioUrl || (currentTrack && currentTrack.id !== track.id)} onClick={nextTrack} style={{ background: 'transparent', border: 'none', cursor: track.audioUrl ? 'pointer' : 'not-allowed', opacity: track.audioUrl ? 1 : 0.5 }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                 <path d="M5 4L15 12L5 20V4Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
                 <path d="M19 5V19" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>

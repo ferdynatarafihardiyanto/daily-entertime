@@ -2,10 +2,16 @@ import Layout from '../components/Layout'
 import Footer from '../components/Footer'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { getContents, addBookmark, removeBookmark, getBookmarks, isLoggedIn } from '../lib/api'
+import { getBookmarks, addBookmark, removeBookmark, isLoggedIn } from '../lib/api'
 import { useAudio } from '../contexts/AudioContext'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchContents } from '../store/contentSlice'
 
 export default function Musik() {
+  const dispatch = useDispatch()
+  const contents = useSelector((state) => state.content.items)
+  const contentStatus = useSelector((state) => state.content.status)
+
   const [searchQuery, setSearchQuery] = useState('')
   const [musicItems, setMusicItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -14,43 +20,46 @@ export default function Musik() {
   const { currentTrack, isPlaying, playTrack, togglePlay } = useAudio()
 
   useEffect(() => {
-    async function fetchMusic() {
-      try {
-        const data = await getContents()
-        if (data.data && data.data.length > 0) {
-          // Filter hanya konten kategori musik (category_id: 3)
-          const fetchedMusic = data.data
-            .filter(item => item.category_id === 3)
-            .map((item) => {
-              let artist = 'Musik'
-              if (item.description && item.description.includes('Artis:')) {
-                artist = item.description.split('\n')[0].replace('Artis: ', '').trim()
-              } else if (item.description) {
-                artist = item.description.substring(0, 50) + '...'
-              }
-              
-              return {
-                id: item.id,
-                slug: item.id.toString(),
-                title: item.title,
-                meta: artist,
-                image: item.thumbnail || '/lagutaklagisama.svg',
-                audioUrl: item.url !== '#' ? item.url : '',
-                lyrics: item.description || ''
-              }
-            })
-          
-          setMusicItems(fetchedMusic)
-        } else {
-          setMusicItems([])
-        }
-      } catch (err) {
-        console.log('Backend gagal dimuat:', err.message)
-        setMusicItems([])
-      } finally {
-        setLoading(false)
-      }
+    if (contentStatus === 'idle') {
+      dispatch(fetchContents())
     }
+  }, [contentStatus, dispatch])
+
+  useEffect(() => {
+    if (contentStatus === 'loading' || contentStatus === 'idle') {
+      setLoading(true)
+    } else if (contentStatus === 'succeeded' || contentStatus === 'failed') {
+      if (contents && contents.length > 0) {
+        const fetchedMusic = contents
+          .filter(item => item.category_id === 3)
+          .map((item) => {
+            let artist = 'Musik'
+            if (item.description && item.description.includes('Artis:')) {
+              artist = item.description.split('\n')[0].replace('Artis: ', '').trim()
+            } else if (item.description) {
+              artist = item.description.substring(0, 50) + '...'
+            }
+            
+            return {
+              id: item.id,
+              slug: item.id.toString(),
+              title: item.title,
+              meta: artist,
+              image: item.thumbnail || '/lagutaklagisama.svg',
+              audioUrl: item.url !== '#' ? item.url : '',
+              lyrics: item.description || ''
+            }
+          })
+        
+        setMusicItems(fetchedMusic)
+      } else {
+        setMusicItems([])
+      }
+      setLoading(false)
+    }
+  }, [contents, contentStatus])
+
+  useEffect(() => {
 
     async function fetchBookmarksData() {
       if (!isLoggedIn()) return
@@ -65,9 +74,21 @@ export default function Musik() {
       }
     }
 
-    fetchMusic()
     fetchBookmarksData()
-  }, [])
+
+    const onFocus = () => {
+      if (contentStatus === 'succeeded' || contentStatus === 'failed') {
+        dispatch(fetchContents())
+      }
+      fetchBookmarksData()
+    }
+
+    window.addEventListener('focus', onFocus)
+    
+    return () => {
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [contentStatus, dispatch])
 
   const filteredMusic = musicItems.filter(music => 
     music.title.toLowerCase().includes(searchQuery.toLowerCase()) || 

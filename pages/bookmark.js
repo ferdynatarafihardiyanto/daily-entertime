@@ -1,50 +1,54 @@
 import Layout from '../components/Layout'
 import Footer from '../components/Footer'
 import { useState, useEffect } from 'react'
-import { getBookmarks, removeBookmark, isLoggedIn } from '../lib/api'
+import { removeBookmark, isLoggedIn } from '../lib/api'
 import { useRouter } from 'next/router'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchBookmarksData, invalidateBookmarks } from '../store/userSlice'
 
 export default function Bookmark() {
   const router = useRouter()
+  const dispatch = useDispatch()
+  const bookmarks = useSelector((state) => state.user.bookmarks)
+  const bookmarksStatus = useSelector((state) => state.user.bookmarksStatus)
+
   const [bookmarkItems, setBookmarkItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('Film')
   const [selectedIds, setSelectedIds] = useState(new Set())
+  useEffect(() => {
+    if (!isLoggedIn()) {
+      setLoading(false)
+      return
+    }
+    if (bookmarksStatus === 'idle') {
+      dispatch(fetchBookmarksData())
+    }
+  }, [bookmarksStatus, dispatch])
 
   useEffect(() => {
-    async function fetchBookmarks() {
-      if (!isLoggedIn()) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        const data = await getBookmarks()
-        if (data.data && data.data.length > 0) {
-          const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
-          const items = data.data.map((item) => ({
-            id: item.bookmark_id || item.id,
-            content_id: item.id,
-            title: item.title || 'Untitled',
-            type: categoryNames[item.category_id] || item.category || 'Lainnya',
-            dateAdded: item.created_at ? new Date(item.created_at).getFullYear().toString() : '2026',
-            producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
-            description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
-            image: item.thumbnail || '/beritarekom1.svg',
-          }))
-          setBookmarkItems(items)
-        } else {
-          setBookmarkItems([])
-        }
-      } catch (err) {
-        console.log('Failed to fetch bookmarks:', err.message)
+    if (bookmarksStatus === 'loading' || bookmarksStatus === 'idle') {
+      if (isLoggedIn()) setLoading(true)
+    } else if (bookmarksStatus === 'succeeded' || bookmarksStatus === 'failed') {
+      if (bookmarks && bookmarks.length > 0) {
+        const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
+        const items = bookmarks.map((item) => ({
+          id: item.bookmark_id || item.id,
+          content_id: item.id,
+          title: item.title || 'Untitled',
+          type: categoryNames[item.category_id] || item.category || 'Lainnya',
+          dateAdded: item.created_at ? new Date(item.created_at).getFullYear().toString() : '2026',
+          producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
+          description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
+          image: item.thumbnail || '/beritarekom1.svg',
+        }))
+        setBookmarkItems(items)
+      } else {
         setBookmarkItems([])
-      } finally {
-        setLoading(false)
       }
+      setLoading(false)
     }
-    fetchBookmarks()
-  }, [])
+  }, [bookmarks, bookmarksStatus])
 
   const filteredItems = bookmarkItems.filter(item => item.type === activeCategory)
 
@@ -71,8 +75,8 @@ export default function Bookmark() {
       const deletePromises = Array.from(selectedIds).map(contentId => removeBookmark(contentId))
       await Promise.all(deletePromises)
       
-      setBookmarkItems(bookmarkItems.filter(item => !selectedIds.has(item.content_id)))
       setSelectedIds(new Set())
+      dispatch(invalidateBookmarks()) // Refresh Redux state after delete
       alert('Berhasil menghapus item.')
     } catch (err) {
       alert('Gagal menghapus beberapa item: ' + err.message)

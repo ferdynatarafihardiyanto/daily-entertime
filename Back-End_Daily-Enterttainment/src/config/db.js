@@ -1,4 +1,10 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+// Perbaikan untuk zona waktu PostgreSQL
+// Memaksa TIMESTAMP (tanpa timezone) dibaca sebagai UTC, bukan timezone lokal server (WIB)
+types.setTypeParser(1114, function(stringValue) {
+  return new Date(stringValue.replace(' ', 'T') + 'Z');
+});
 
 const pool = new Pool(
   process.env.DATABASE_URL

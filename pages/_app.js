@@ -16,12 +16,17 @@ if (typeof window !== 'undefined') {
 import { AudioProvider } from '../contexts/AudioContext'
 import GlobalPlayer from '../components/GlobalPlayer'
 
+import { Provider } from 'react-redux'
+import { store } from '../store/store'
+
 function MyApp({ Component, pageProps }) {
   return (
-    <AudioProvider>
-      <Component {...pageProps} />
-      <GlobalPlayer />
-    </AudioProvider>
+    <Provider store={store}>
+      <AudioProvider>
+        <Component {...pageProps} />
+        <GlobalPlayer />
+      </AudioProvider>
+    </Provider>
   )
 }
 
