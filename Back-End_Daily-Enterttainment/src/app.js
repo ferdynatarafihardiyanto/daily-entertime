@@ -4,6 +4,9 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
+// Inisialisasi koneksi Redis
+require('./config/redis');
+
 // CORS middleware - izinkan frontend Next.js mengakses API
 app.use((req, res, next) => {
   // Izinkan origin dinamis agar kredensial (cookie) tetap berfungsi
