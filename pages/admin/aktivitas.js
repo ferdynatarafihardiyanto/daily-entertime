@@ -60,9 +60,9 @@ export default function AktivitasPage() {
       <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <a href="/admin" style={{ background: 'transparent', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '24px', textDecoration: 'none' }}>
+          <Link href="/admin" style={{ background: 'transparent', border: 'none', color: '#9CA3AF', cursor: 'pointer', fontSize: '24px', textDecoration: 'none' }}>
             &larr;
-          </a>
+          </Link>
           <h2 style={{ color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ color: '#A855F7' }}>⏱️</span> Semua Aktivitas
           </h2>

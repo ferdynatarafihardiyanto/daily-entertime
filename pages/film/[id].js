@@ -137,7 +137,7 @@ export default function FilmDetail() {
 
             <div style={{ backgroundColor: 'rgba(168, 85, 247, 0.05)', padding: '15px 20px', borderRadius: '8px', marginTop: '40px' }}>
               <p style={{ margin: 0, fontSize: '13px', color: '#9CA3AF' }}>
-                Catatan : Gunakan <span style={{ color: '#A855F7' }}>'Stream 1'</span> untuk Streaming dengan Resolusi <span style={{ color: '#A855F7' }}>'360P'/'480P'</span>, Gunakan <span style={{ color: '#22C55E' }}>'Stream 2'</span> Untuk Resolusi <span style={{ color: '#22C55E' }}>'720P'</span>, dan <span style={{ color: '#3B82F6' }}>'Stream 3'</span> Untuk <a href="#" style={{ color: '#3B82F6', textDecoration: 'underline' }}>Alternatif</a>
+                Catatan : Gunakan <span style={{ color: '#A855F7' }}>&apos;Stream 1&apos;</span> untuk Streaming dengan Resolusi <span style={{ color: '#A855F7' }}>&apos;360P&apos;/&apos;480P&apos;</span>, Gunakan <span style={{ color: '#22C55E' }}>&apos;Stream 2&apos;</span> Untuk Resolusi <span style={{ color: '#22C55E' }}>&apos;720P&apos;</span>, dan <span style={{ color: '#3B82F6' }}>&apos;Stream 3&apos;</span> Untuk <a href="#" style={{ color: '#3B82F6', textDecoration: 'underline' }}>Alternatif</a>
               </p>
             </div>
           </div>
