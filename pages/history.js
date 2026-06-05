@@ -21,13 +21,11 @@ export default function History() {
       setLoading(false)
       return
     }
-    if (historyStatus === 'idle') {
-      dispatch(fetchHistoryData())
-    }
-  }, [historyStatus, dispatch])
+    dispatch(fetchHistoryData())
+  }, [dispatch])
 
   useEffect(() => {
-    if (historyStatus === 'loading' || historyStatus === 'idle') {
+    if (historyStatus === 'idle') {
       if (isLoggedIn()) setLoading(true)
     } else if (historyStatus === 'succeeded' || historyStatus === 'failed') {
       if (historyData && historyData.length > 0) {

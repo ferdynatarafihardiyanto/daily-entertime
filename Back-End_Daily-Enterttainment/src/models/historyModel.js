@@ -2,8 +2,6 @@ const { pool } = require('../config/db');
 
 const History = {
   async addHistory(userId, contentId) {
-    // Remove existing history for this content to prevent duplicates (acts as upsert)
-    await pool.query('DELETE FROM history WHERE user_id = $1 AND content_id = $2', [userId, contentId]);
 
     const query = `
       INSERT INTO history (user_id, content_id, viewed_at)
@@ -34,17 +32,7 @@ const History = {
     `;
     const result = await pool.query(query, [userId]);
     
-    // Filter duplicates in case they exist from before
-    const uniqueHistories = [];
-    const seenContentIds = new Set();
-    for (const row of result.rows) {
-      if (!seenContentIds.has(row.id)) {
-        seenContentIds.add(row.id);
-        uniqueHistories.push(row);
-      }
-    }
-    
-    return uniqueHistories;
+    return result.rows;
   },
 
   async findByUserAndContent(userId, contentId) {

@@ -21,13 +21,11 @@ export default function Bookmark() {
       setLoading(false)
       return
     }
-    if (bookmarksStatus === 'idle') {
-      dispatch(fetchBookmarksData())
-    }
-  }, [bookmarksStatus, dispatch])
+    dispatch(fetchBookmarksData())
+  }, [dispatch])
 
   useEffect(() => {
-    if (bookmarksStatus === 'loading' || bookmarksStatus === 'idle') {
+    if (bookmarksStatus === 'idle') {
       if (isLoggedIn()) setLoading(true)
     } else if (bookmarksStatus === 'succeeded' || bookmarksStatus === 'failed') {
       if (bookmarks && bookmarks.length > 0) {
