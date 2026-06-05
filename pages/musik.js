@@ -6,6 +6,7 @@ import { getBookmarks, addBookmark, removeBookmark, isLoggedIn } from '../lib/ap
 import { useAudio } from '../contexts/AudioContext'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents } from '../store/contentSlice'
+import { fetchBookmarksData, invalidateBookmarks } from '../store/userSlice'
 
 export default function Musik() {
   const dispatch = useDispatch()
@@ -17,6 +18,8 @@ export default function Musik() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set())
+  const bookmarks = useSelector((state) => state.user.bookmarks)
+  const bookmarksStatus = useSelector((state) => state.user.bookmarksStatus)
   const { currentTrack, isPlaying, playTrack, togglePlay } = useAudio()
 
   useEffect(() => {
@@ -60,27 +63,23 @@ export default function Musik() {
   }, [contents, contentStatus])
 
   useEffect(() => {
-
-    async function fetchBookmarksData() {
-      if (!isLoggedIn()) return
-      try {
-        const data = await getBookmarks()
-        if (data.data) {
-          const ids = new Set(data.data.map(b => b.id))
-          setBookmarkedIds(ids)
-        }
-      } catch (err) {
-        console.error('Failed to fetch bookmarks:', err)
-      }
+    if (bookmarks) {
+      setBookmarkedIds(new Set(bookmarks.map(b => b.id)))
     }
+  }, [bookmarks])
 
-    fetchBookmarksData()
+  useEffect(() => {
+    if (isLoggedIn() && bookmarksStatus === 'idle') {
+      dispatch(fetchBookmarksData())
+    }
 
     const onFocus = () => {
       if (contentStatus === 'succeeded' || contentStatus === 'failed') {
         dispatch(fetchContents())
       }
-      fetchBookmarksData()
+      if (isLoggedIn()) {
+        dispatch(fetchBookmarksData())
+      }
     }
 
     window.addEventListener('focus', onFocus)
@@ -88,7 +87,7 @@ export default function Musik() {
     return () => {
       window.removeEventListener('focus', onFocus)
     }
-  }, [contentStatus, dispatch])
+  }, [contentStatus, bookmarksStatus, dispatch])
 
   const filteredMusic = musicItems.filter(music => 
     music.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -118,6 +117,7 @@ export default function Musik() {
       } else {
         await addBookmark(id)
       }
+      dispatch(invalidateBookmarks())
     } catch (err) {
       // Revert if failed
       setBookmarkedIds(bookmarkedIds)
