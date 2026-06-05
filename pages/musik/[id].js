@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { getContentById, addBookmark, trackHistory, isLoggedIn } from '../../lib/api'
 import { useAudio } from '../../contexts/AudioContext'
+import { useSelector } from 'react-redux'
 
 export default function MusicDetail() {
   const router = useRouter()
@@ -11,11 +12,41 @@ export default function MusicDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   
+  const contents = useSelector((state) => state.content.items)
+  
   // Use Global Audio Context
   const { currentTrack, isPlaying, currentTime, duration, playTrack, togglePlay, seek, nextTrack, previousTrack, playlist } = useAudio()
 
   useEffect(() => {
     if (!id) return
+
+    // Coba ambil dari cache Redux dulu
+    const cachedTrack = contents.find(item => item.id.toString() === id)
+    if (cachedTrack && !track) {
+      let artist = 'Tidak diketahui'
+      let lyrics = ''
+      if (cachedTrack.description) {
+        if (cachedTrack.description.includes('Artis:')) {
+          const parts = cachedTrack.description.split('\n')
+          artist = parts[0].replace('Artis: ', '').trim()
+          if (parts.length > 1) {
+            lyrics = parts.slice(1).join('\n').replace('Deskripsi: ', '').trim()
+          }
+        } else {
+          lyrics = cachedTrack.description
+        }
+      }
+
+      setTrack({
+        id: cachedTrack.id,
+        title: cachedTrack.title,
+        artist: artist,
+        lyrics: lyrics,
+        image: cachedTrack.thumbnail || '/lagunyaman.svg',
+        audioUrl: cachedTrack.url !== '#' ? cachedTrack.url : ''
+      })
+      setLoading(false)
+    }
 
     async function fetchMusic() {
       try {

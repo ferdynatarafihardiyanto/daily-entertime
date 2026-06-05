@@ -101,19 +101,26 @@ export default function Musik() {
       return
     }
 
+    const newBookmarkedIds = new Set(bookmarkedIds)
+    const isBookmarked = bookmarkedIds.has(id)
+    
+    // Optimistic update
+    if (isBookmarked) {
+      newBookmarkedIds.delete(id)
+    } else {
+      newBookmarkedIds.add(id)
+    }
+    setBookmarkedIds(newBookmarkedIds)
+
     try {
-      const newBookmarkedIds = new Set(bookmarkedIds)
-      if (bookmarkedIds.has(id)) {
+      if (isBookmarked) {
         await removeBookmark(id)
-        newBookmarkedIds.delete(id)
-        alert("Musik dihapus dari menu bookmark!")
       } else {
         await addBookmark(id)
-        newBookmarkedIds.add(id)
-        alert("Musik berhasil disimpan ke menu bookmark!")
       }
-      setBookmarkedIds(newBookmarkedIds)
     } catch (err) {
+      // Revert if failed
+      setBookmarkedIds(bookmarkedIds)
       alert("Gagal memperbarui bookmark: " + err.message)
     }
   }

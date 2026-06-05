@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { useState, useEffect, useRef } from 'react'
 import Layout from '../../components/Layout'
 import { getContentById, trackHistory, isLoggedIn } from '../../lib/api'
+import { useSelector } from 'react-redux'
 
 export default function FilmDetail() {
   const router = useRouter()
@@ -12,26 +13,37 @@ export default function FilmDetail() {
 
   const hasFetched = useRef(false)
 
+  const contents = useSelector((state) => state.content.items)
+
   useEffect(() => {
-    if (id && !hasFetched.current) {
-      hasFetched.current = true;
-      async function fetchFilm() {
-        try {
-          const data = await getContentById(id)
-          setFilm(data.data)
-          
-          if (isLoggedIn() && data.data) {
-            trackHistory(id).catch(err => console.error('Failed to track history', err))
-          }
-        } catch (err) {
-          console.error("Gagal mengambil data film:", err)
-        } finally {
-          setLoading(false)
-        }
+    if (id) {
+      // Coba ambil dari cache Redux dulu agar instan
+      const cachedFilm = contents.find(item => item.id.toString() === id)
+      if (cachedFilm && !film) {
+        setFilm(cachedFilm)
+        setLoading(false)
       }
-      fetchFilm()
+
+      if (!hasFetched.current) {
+        hasFetched.current = true;
+        async function fetchFilm() {
+          try {
+            const data = await getContentById(id)
+            setFilm(data.data)
+            
+            if (isLoggedIn() && data.data) {
+              trackHistory(id).catch(err => console.error('Failed to track history', err))
+            }
+          } catch (err) {
+            console.error("Gagal mengambil data film:", err)
+          } finally {
+            setLoading(false)
+          }
+        }
+        fetchFilm()
+      }
     }
-  }, [id])
+  }, [id, contents])
 
   if (loading) {
     return (

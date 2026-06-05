@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import Layout from '../../components/Layout'
 import { useState, useEffect } from 'react'
 import { getContentById, trackHistory, isLoggedIn } from '../../lib/api'
+import { useSelector } from 'react-redux'
 
 export default function BeritaDetail() {
   const router = useRouter()
@@ -9,8 +10,21 @@ export default function BeritaDetail() {
   const [news, setNews] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const contents = useSelector((state) => state.content.items)
+
   useEffect(() => {
     if (!slug) return;
+
+    // Coba ambil dari cache Redux dulu
+    const cachedNews = contents.find(item => item.id.toString() === slug)
+    if (cachedNews && !news) {
+      setNews({
+        title: cachedNews.title,
+        image: cachedNews.thumbnail || '/beritarekom1.svg',
+        body: cachedNews.description || 'Tidak ada deskripsi yang tersedia.',
+      })
+      setLoading(false)
+    }
 
     async function fetchNewsDetail() {
       try {

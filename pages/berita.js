@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { getBookmarks, addBookmark, removeBookmark, isLoggedIn } from '../lib/api'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents } from '../store/contentSlice'
+import { invalidateBookmarks } from '../store/userSlice'
 
 export default function Berita() {
   const dispatch = useDispatch()
@@ -128,19 +129,27 @@ export default function Berita() {
       return
     }
 
+    const newBookmarkedIds = new Set(bookmarkedIds)
+    const isBookmarked = bookmarkedIds.has(id)
+    
+    // Optimistic update
+    if (isBookmarked) {
+      newBookmarkedIds.delete(id)
+    } else {
+      newBookmarkedIds.add(id)
+    }
+    setBookmarkedIds(newBookmarkedIds)
+
     try {
-      const newBookmarkedIds = new Set(bookmarkedIds)
-      if (bookmarkedIds.has(id)) {
+      if (isBookmarked) {
         await removeBookmark(id)
-        newBookmarkedIds.delete(id)
-        alert("Berita dihapus dari menu bookmark!")
       } else {
         await addBookmark(id)
-        newBookmarkedIds.add(id)
-        alert("Berita berhasil disimpan ke menu bookmark!")
       }
-      setBookmarkedIds(newBookmarkedIds)
+      dispatch(invalidateBookmarks())
     } catch (err) {
+      // Revert if failed
+      setBookmarkedIds(bookmarkedIds)
       alert("Gagal memperbarui bookmark: " + err.message)
     }
   }
