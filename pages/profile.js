@@ -49,7 +49,8 @@ export default function Profile() {
         await updateUserAPI(user.id, { 
           username: formData.username, 
           email: formData.email,
-          role: user.roles?.[0] // Send existing role if any just in case, but backend doesn't require role for user update
+          role: user.roles?.[0], // Send existing role if any just in case, but backend doesn't require role for user update
+          avatar: formData.avatar
         })
       }
       

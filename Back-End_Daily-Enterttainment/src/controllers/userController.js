@@ -82,11 +82,21 @@ async function updateUser(req, res) {
       return res.status(400).json(createErrorResponse('Username dan Email tidak boleh kosong'));
     }
 
-    // Update username and email
-    await pool.query(
-      `UPDATE users SET username = $1, email = $2 WHERE id = $3`,
-      [username, email, id]
-    );
+    // Update username, email, and conditionally avatar
+    let updateQuery = `UPDATE users SET username = $1, email = $2`;
+    let updateValues = [username, email];
+    let paramCount = 3;
+
+    if (req.body.avatar !== undefined) {
+      updateQuery += `, avatar = $${paramCount}`;
+      updateValues.push(req.body.avatar);
+      paramCount++;
+    }
+
+    updateQuery += ` WHERE id = $${paramCount}`;
+    updateValues.push(id);
+
+    await pool.query(updateQuery, updateValues);
 
     // Update role if provided and user is admin
     if (role && isAdmin) {

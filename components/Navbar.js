@@ -4,11 +4,13 @@ import { useRouter } from 'next/router'
 
 export default function Navbar({ onToggleSidebar, isScrolled = false, isOpen = false }) {
   const [user, setUser] = useState(null)
+  const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     const stored = localStorage.getItem('currentUser')
     if (stored) setUser(JSON.parse(stored))
+    setIsMounted(true)
   }, [])
 
   return (
@@ -41,8 +43,8 @@ export default function Navbar({ onToggleSidebar, isScrolled = false, isOpen = f
       </div>
 
       {/* Right */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {user ? (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '38px' }}>
+        {!isMounted ? null : user ? (
           /* Profile badge - shown when logged in */
           <div 
             onClick={() => router.push('/profile')}

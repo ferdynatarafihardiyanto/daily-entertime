@@ -178,6 +178,7 @@ async function loginUser(email, password) {
       username: user.username,
       email: user.email,
       roles,
+      avatar: user.avatar,
     },
   };
 }

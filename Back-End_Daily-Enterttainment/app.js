@@ -1,11 +1,11 @@
 const express = require('express');
-const routes = require('./routes/routes');
+const routes = require('./src/routes/routes');
 const cookieParser = require('cookie-parser');
 
 const app = express();
 
 // Inisialisasi koneksi Redis
-require('./config/redis');
+require('./src/config/redis');
 
 // CORS middleware - izinkan frontend Next.js mengakses API
 app.use((req, res, next) => {
