@@ -21,36 +21,7 @@ export default function Film() {
   const bookmarksStatus = useSelector((state) => state.user.bookmarksStatus)
 
   const fallbackFilms = [
-    {
-      id: 1,
-      slug: 'miracle-in-cell-no-7',
-      title: 'Miracle in Cell No. 7',
-      meta: 'Drama, Family • 2022',
-      image: '/filmmiracle.svg'
-    },
-    {
-      id: 2,
-      slug: 'ipar-adalah-maut',
-      title: 'Ipar Adalah Maut',
-      meta: 'Drama • 2024',
-      image: '/filmiparadalahmaut.svg'
-    },
-    {
-      id: 3,
-      slug: 'danur-i-can-see-ghosts',
-      title: 'Danur: I Can See Ghosts',
-      meta: 'Horror • 2017',
-      image: '/filmdanur.svg'
-    },
-    {
-      id: 4,
-      slug: 'agak-laen',
-      title: 'Agak Laen',
-      meta: 'Comedy, Horror • 2024',
-      image: '/filmagaklain.svg'
-    },
   ]
-
   useEffect(() => {
     if (contentStatus === 'idle') {
       dispatch(fetchContents())

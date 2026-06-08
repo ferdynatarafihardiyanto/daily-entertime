@@ -1,6 +1,6 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect, useRef } from 'react'
-import { createContent, deleteContentAPI, updateContentAPI } from '../../lib/api'
+import { createContent, deleteContentAPI, updateContentAPI, uploadBase64API } from '../../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, invalidateContent } from '../../store/contentSlice'
@@ -30,6 +30,7 @@ export default function TambahFilm() {
   const [servers, setServers] = useState([{ id: 1, name: 'Server 1', link: '' }])
   const [thumbnailBase64, setThumbnailBase64] = useState('')
   const [thumbnailFileName, setThumbnailFileName] = useState('')
+  const [thumbnailFile, setThumbnailFile] = useState(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function TambahFilm() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setThumbnailFile(file);
       setThumbnailFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -110,6 +112,7 @@ export default function TambahFilm() {
     setServers([{ id: 1, name: 'Server 1', link: '' }])
     setThumbnailBase64('')
     setThumbnailFileName('')
+    setThumbnailFile(null)
     setShowForm(false)
   }
 
@@ -173,24 +176,38 @@ export default function TambahFilm() {
     const urlString = JSON.stringify(servers.filter(s => s.link.trim() !== '').map((s, idx) => ({ name: s.name || `Server ${idx + 1}`, link: s.link })));
 
     try {
+      const uploadRes = await uploadBase64API(thumbnailBase64, 'movie-poster.jpg');
+      if (!uploadRes.success) {
+        throw new Error(uploadRes.message || "Gagal mengunggah gambar ke Cloudinary");
+      }
+      const imageUrl = uploadRes.imageUrl;
+
       if (editingId) {
         // Edit mode
         await updateContentAPI(editingId, {
           title: judulFilm,
           description: descriptionString,
-          thumbnail: thumbnailBase64 || undefined, // keep old if not changing, but we loaded it into base64 state so it's fine
+          thumbnail: imageUrl || undefined, // keep old if not changing
           url: urlString,
         });
         alert("Berhasil! Film berhasil diperbarui.");
       } else {
         // Create mode
-        await createContent({
-          title: judulFilm,
-          description: descriptionString,
-          category_id: 2,
-          thumbnail: thumbnailBase64 || '/filmmiracle.svg',
-          url: urlString,
-        });
+    const slug = judulFilm
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "");
+
+    await createContent({
+      title: judulFilm,
+      slug,
+      description: descriptionString,
+      contentTypeId: 2,
+      thumbnail: imageUrl || "",
+      status: "published",
+      url: urlString
+    });
         alert("Berhasil! Film berhasil ditambahkan ke database.");
       }
       dispatch(invalidateContent());

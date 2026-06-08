@@ -1,6 +1,6 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect, useRef } from 'react'
-import { createContent, deleteContentAPI, updateContentAPI } from '../../lib/api'
+import { createContent, deleteContentAPI, updateContentAPI, uploadBase64API } from '../../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, invalidateContent } from '../../store/contentSlice'
@@ -32,6 +32,7 @@ export default function TambahMusik() {
   const [audioFileName, setAudioFileName] = useState('')
   const [thumbnailBase64, setThumbnailBase64] = useState('')
   const [thumbnailFileName, setThumbnailFileName] = useState('')
+  const [thumbnailFile, setThumbnailFile] = useState(null)
   
   const audioInputRef = useRef(null)
   const coverInputRef = useRef(null)
@@ -87,6 +88,7 @@ export default function TambahMusik() {
   const handleCoverChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setThumbnailFile(file);
       setThumbnailFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -105,6 +107,7 @@ export default function TambahMusik() {
     setAudioFileName('')
     setThumbnailBase64('')
     setThumbnailFileName('')
+    setThumbnailFile(null)
     setShowForm(false)
   }
 
@@ -155,21 +158,43 @@ export default function TambahMusik() {
     const descriptionString = deskripsi ? `Artis: ${penyanyiMusik}\nDeskripsi: ${deskripsi}` : `Artis: ${penyanyiMusik}`;
     
     try {
+      // 1. Unggah gambar cover ke Cloudinary jika baru/base64
+      const coverRes = await uploadBase64API(thumbnailBase64, 'music-cover.jpg');
+      if (!coverRes.success) {
+        throw new Error(coverRes.message || "Gagal mengunggah cover album ke Cloudinary");
+      }
+      const imageUrl = coverRes.imageUrl;
+
+      // 2. Unggah file audio ke Cloudinary jika baru/base64
+      const audioRes = await uploadBase64API(audioBase64, 'music-audio.mp3');
+      if (!audioRes.success) {
+        throw new Error(audioRes.message || "Gagal mengunggah file audio ke Cloudinary");
+      }
+      const audioUrl = audioRes.imageUrl;
+
       if (editingId) {
         await updateContentAPI(editingId, {
           title: judulMusik,
           description: descriptionString,
-          thumbnail: thumbnailBase64 || undefined,
-          url: audioBase64 || undefined,
+          thumbnail: imageUrl || undefined,
+          url: audioUrl || undefined,
         });
         alert("Berhasil! Musik berhasil diperbarui.");
       } else {
+        const slug = judulMusik
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w-]+/g, "");
+
         await createContent({
           title: judulMusik,
+          slug,
           description: descriptionString,
-          category_id: 3,
-          thumbnail: thumbnailBase64 || '/lagutaklagisama.svg',
-          url: audioBase64 || '#',
+          contentTypeId: 1,
+          thumbnail: imageUrl || '/lagutaklagisama.svg',
+          url: audioUrl || '#',
+          status: "published"
         });
         alert("Berhasil! Musik berhasil ditambahkan ke database.");
       }
