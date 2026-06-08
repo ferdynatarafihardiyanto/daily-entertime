@@ -1,6 +1,6 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect, useRef } from 'react'
-import { createContent, deleteContentAPI, updateContentAPI } from '../../lib/api'
+import { createContent, deleteContentAPI, updateContentAPI, uploadBase64API } from '../../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, invalidateContent } from '../../store/contentSlice'
@@ -27,6 +27,7 @@ export default function TambahBerita() {
   
   const [thumbnailBase64, setThumbnailBase64] = useState('')
   const [thumbnailFileName, setThumbnailFileName] = useState('')
+  const [thumbnailFile, setThumbnailFile] = useState(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function TambahBerita() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setThumbnailFile(file);
       setThumbnailFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -75,6 +77,7 @@ export default function TambahBerita() {
     setTeksBaru('')
     setThumbnailBase64('')
     setThumbnailFileName('')
+    setThumbnailFile(null)
     setShowForm(false)
   }
 
@@ -107,20 +110,34 @@ export default function TambahBerita() {
     }
     
     try {
+      const uploadRes = await uploadBase64API(thumbnailBase64, 'news-poster.jpg');
+      if (!uploadRes.success) {
+        throw new Error(uploadRes.message || "Gagal mengunggah gambar ke Cloudinary");
+      }
+      const imageUrl = uploadRes.imageUrl;
+
       if (editingId) {
         await updateContentAPI(editingId, {
           title: judulBaru,
           description: teksBaru,
-          thumbnail: thumbnailBase64 || undefined,
+          thumbnail: imageUrl || undefined,
         });
         alert("Berhasil! Berita berhasil diperbarui.");
       } else {
+        const slug = judulBaru
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w-]+/g, "");
+
         await createContent({
           title: judulBaru,
+          slug,
           description: teksBaru,
-          category_id: 1,
-          thumbnail: thumbnailBase64 || '/beritarekom1.svg',
-          url: '#',
+          contentTypeId: 3,
+          thumbnail: imageUrl || '/beritarekom1.svg',
+          status: "published",
+          url: '#'
         });
         alert("Berhasil! Berita berhasil ditambahkan ke database.");
       }
