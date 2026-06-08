@@ -29,12 +29,16 @@ export default function History() {
       if (isLoggedIn()) setLoading(true)
     } else if (historyStatus === 'succeeded' || historyStatus === 'failed') {
       if (historyData && historyData.length > 0) {
-        const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
+        const typeMap = {
+            News: 'Berita',
+            Movie: 'Film',
+            Music: 'Musik'
+          }
         const items = historyData.map((item) => ({
           id: item.history_id || item.id,
           content_id: item.content_id || item.id,
           title: item.title || 'Untitled',
-          type: categoryNames[item.category_id] || item.category || 'Lainnya',
+          type: typeMap[item.content_type_name] || 'Lainnya',
           dateAdded: item.viewed_at ? new Date(item.viewed_at).getFullYear().toString() : '2026',
           producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
           description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',

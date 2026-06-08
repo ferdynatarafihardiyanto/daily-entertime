@@ -29,17 +29,28 @@ export default function Bookmark() {
       if (isLoggedIn()) setLoading(true)
     } else if (bookmarksStatus === 'succeeded' || bookmarksStatus === 'failed') {
       if (bookmarks && bookmarks.length > 0) {
-        const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
+        const typeMap = {
+            News: 'Berita',
+            Movie: 'Film',
+            Music: 'Musik'
+          }
         const items = bookmarks.map((item) => ({
           id: item.bookmark_id || item.id,
           content_id: item.id,
           title: item.title || 'Untitled',
-          type: categoryNames[item.category_id] || item.category || 'Lainnya',
+          type: typeMap[item.content_type_name] || 'Lainnya',
           dateAdded: item.created_at ? new Date(item.created_at).getFullYear().toString() : '2026',
           producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
           description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
           image: item.thumbnail || '/beritarekom1.svg',
         }))
+        console.log(
+            bookmarks.map(b => ({
+              title: b.title,
+              content_type_name: b.content_type_name,
+              category_names: b.category_names,
+            }))
+          )
         setBookmarkItems(items)
       } else {
         setBookmarkItems([])

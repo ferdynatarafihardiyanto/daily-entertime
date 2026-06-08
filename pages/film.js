@@ -20,8 +20,6 @@ export default function Film() {
   const bookmarks = useSelector((state) => state.user.bookmarks)
   const bookmarksStatus = useSelector((state) => state.user.bookmarksStatus)
 
-  const fallbackFilms = [
-  ]
   useEffect(() => {
     if (contentStatus === 'idle') {
       dispatch(fetchContents())
@@ -61,13 +59,9 @@ export default function Film() {
             }
           })
         
-        if (fetchedFilms.length > 0) {
-          setFilmItems(fetchedFilms)
-        } else {
-          setFilmItems(fallbackFilms)
-        }
+        setFilmItems(fetchedFilms)
       } else {
-        setFilmItems(fallbackFilms)
+        setFilmItems([])
       }
       setLoading(false)
     }
