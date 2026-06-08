@@ -126,7 +126,8 @@ export default function JadwalMingguan() {
     }
   }
 
-  const availableContents = contents.filter(c => c.category_id == categoryIds[newSchedule.category])
+  const typeMap = { News: 1, Movie: 2, Music: 3 }
+  const availableContents = contents.filter(c => (c.category_id || typeMap[c.content_type_name]) == categoryIds[newSchedule.category])
 
   return (
     <AdminLayout title="Jadwal Mingguan - Admin">

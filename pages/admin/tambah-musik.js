@@ -50,7 +50,7 @@ export default function TambahMusik() {
       setIsLoading(false)
       if (contents) {
         const mappedMusics = contents
-          .filter(item => item.category_id === 3)
+          .filter(item => item.category_id === 3 || item.content_type_name === 'Music')
           .map(item => {
             let artist = 'Tidak diketahui'
             if (item.description && item.description.includes('Artis:')) {

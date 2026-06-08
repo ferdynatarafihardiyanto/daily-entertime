@@ -32,7 +32,7 @@ export default function Berita() {
     } else if (contentStatus === 'succeeded' || contentStatus === 'failed') {
       if (contents && contents.length > 0) {
         const beritaItems = contents
-          .filter(item => item.category_id === 1)
+          .filter(item => item.category_id === 1 || item.content_type_name === 'News')
           .map((item) => ({
             id: item.id,
             slug: item.id.toString(),

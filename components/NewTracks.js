@@ -21,7 +21,7 @@ export default function NewTracks() {
     if (contentStatus === 'succeeded' || contentStatus === 'failed') {
       const data = contents || []
       const topTracks = data
-        .filter(item => item.category_id === 3)
+        .filter(item => item.category_id === 3 || item.content_type_name === 'Music')
         .sort((a, b) => (b.view || 0) - (a.view || 0))
         .map(item => {
           let artist = 'Unknown Artist'

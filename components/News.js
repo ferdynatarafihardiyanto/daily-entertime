@@ -20,7 +20,7 @@ export default function News() {
     if (contentStatus === 'succeeded' || contentStatus === 'failed') {
       const data = contents || []
       const latestNews = data
-        .filter(item => item.category_id === 1)
+        .filter(item => item.category_id === 1 || item.content_type_name === 'News')
         .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
         .slice(0, 4)
       

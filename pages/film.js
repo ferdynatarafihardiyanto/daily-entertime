@@ -32,7 +32,7 @@ export default function Film() {
     } else if (contentStatus === 'succeeded' || contentStatus === 'failed') {
       if (contents && contents.length > 0) {
         const fetchedFilms = contents
-          .filter(item => item.category_id === 2)
+          .filter(item => item.category_id === 2 || item.content_type_name === 'Movie')
           .map((item) => {
             let sutradara = 'Tidak diketahui'
             let sinopsis = 'Film'
