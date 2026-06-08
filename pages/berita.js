@@ -20,42 +20,6 @@ export default function Berita() {
   const bookmarks = useSelector((state) => state.user.bookmarks)
   const bookmarksStatus = useSelector((state) => state.user.bookmarksStatus)
 
-  // Dummy data sebagai fallback jika backend belum berjalan
-  const fallbackNews = [
-    {
-      id: 1,
-      slug: 'sekretaris-al-as-dipecat',
-      title: 'Lagi, Giliran Sekretaris Angkatan Laut AS yang Dipecat Pentagon',
-      date: '24 Mei 2026',
-      description: 'Lagi, Giliran Sekretaris Angkatan Laut AS yang Dipecat Pentagon, kasus ini kembali mencuat setelah sejumlah petinggi menyatakan...',
-      image: '/beritarekom1.svg'
-    },
-    {
-      id: 2,
-      slug: 'fadly-alberto-kungfu',
-      title: 'Fadly Alberto Ungkap Alasan Menyerang Kungfu Pemain Dewa United U20',
-      date: '24 Mei 2026',
-      description: 'Fadly Alberto mengungkap alasannya usai pertandingan yang berlangsung panas di babak kedua turnamen lokal...',
-      image: '/beritarekom2.svg'
-    },
-    {
-      id: 3,
-      slug: 'man-city-menang',
-      title: 'Man City Hanya Menang 1-0 Lawan Burnley, Pep: Kenapa Harus Frustasi?',
-      date: '23 Mei 2026',
-      description: 'Pertandingan Liga Inggris mempertemukan Man City dengan Burnley dengan hasil akhir tipis. Pelatih Pep Guardiola menegaskan timnya bermain cukup baik.',
-      image: '/beritarekom3.svg'
-    },
-    {
-      id: 4,
-      slug: 'kronologi-driver-ojol-antapani',
-      title: 'Kronologi Driver Ojol di Antapani Diduga dilecehkan Remaja, Nyaris Diamuk Massa',
-      date: '22 Mei 2026',
-      description: 'Seorang pengemudi ojek online di daerah Antapani diduga mengalami pelecehan oleh sekelompok remaja hingga mengundang amarah warga sekitar.',
-      image: '/beritarekom4.svg'
-    },
-  ]
-
   useEffect(() => {
     if (contentStatus === 'idle') {
       dispatch(fetchContents())
@@ -78,13 +42,9 @@ export default function Berita() {
             image: item.thumbnail || '/beritarekom1.svg',
           }))
         
-        if (beritaItems.length > 0) {
-          setNewsItems(beritaItems)
-        } else {
-          setNewsItems(fallbackNews)
-        }
+        setNewsItems(beritaItems)
       } else {
-        setNewsItems(fallbackNews)
+        setNewsItems([])
       }
       setLoading(false)
     }
