@@ -13,6 +13,10 @@ export default function BeritaDetail() {
   const contents = useSelector((state) => state.content.items)
 
   useEffect(() => {
+    if (!isLoggedIn()) {
+      router.push('/login')
+      return
+    }
     if (!slug) return;
 
     // Coba ambil dari cache Redux dulu

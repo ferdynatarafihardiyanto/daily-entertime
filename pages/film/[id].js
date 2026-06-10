@@ -16,6 +16,10 @@ export default function FilmDetail() {
   const contents = useSelector((state) => state.content.items)
 
   useEffect(() => {
+    if (!isLoggedIn()) {
+      router.push('/login')
+      return
+    }
     if (id) {
       // Coba ambil dari cache Redux dulu agar instan
       const cachedFilm = contents.find(item => item.id.toString() === id)
