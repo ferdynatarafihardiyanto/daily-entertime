@@ -18,15 +18,15 @@ export default function History() {
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('Film')
   const [selectedIds, setSelectedIds] = useState(new Set())
+
   useEffect(() => {
     if (!isLoggedIn()) {
       setLoading(false)
       return
     }
-    if (historyStatus === 'idle') {
-      dispatch(fetchHistoryData())
-    }
-  }, [dispatch, historyStatus])
+    dispatch(invalidateHistory())
+    dispatch(fetchHistoryData())
+  }, [dispatch])
 
   useEffect(() => {
     if (historyStatus === 'idle') {

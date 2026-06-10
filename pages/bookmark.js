@@ -18,15 +18,15 @@ export default function Bookmark() {
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('Film')
   const [selectedIds, setSelectedIds] = useState(new Set())
+
   useEffect(() => {
     if (!isLoggedIn()) {
       setLoading(false)
       return
     }
-    if (bookmarksStatus === 'idle') {
-      dispatch(fetchBookmarksData())
-    }
-  }, [dispatch, bookmarksStatus])
+    dispatch(invalidateBookmarks())
+    dispatch(fetchBookmarksData())
+  }, [dispatch])
 
   useEffect(() => {
     if (bookmarksStatus === 'idle') {
