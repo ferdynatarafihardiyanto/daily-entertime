@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AdminLayout from '../../components/AdminLayout'
 import { getAllUsers, createUserAPI, updateUserAPI, deleteUserAPI, getContents } from '../../lib/api'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function AdminDashboard() {
+  const toast = useToast()
   const [users, setUsers] = useState([])
   const [contents, setContents] = useState([])
   const [userPage, setUserPage] = useState(1)
@@ -48,13 +50,15 @@ export default function AdminDashboard() {
     e.preventDefault()
     try {
       await createUserAPI(formData)
-      alert('Berhasil menambahkan pengguna')
+      toast.success('Berhasil menambahkan pengguna')
       setIsModalOpen(false)
       setFormData({ username: '', email: '', password: '', role: 'user' })
       // Refresh the page or fetch users again to update list
-      window.location.reload()
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
     } catch (err) {
-      alert(err.message || 'Gagal menambahkan pengguna')
+      toast.error(err.message || 'Gagal menambahkan pengguna')
     }
   }
 
@@ -72,11 +76,13 @@ export default function AdminDashboard() {
     e.preventDefault()
     try {
       await updateUserAPI(editFormData.id, editFormData)
-      alert('Berhasil memperbarui pengguna')
+      toast.success('Berhasil memperbarui pengguna')
       setIsEditModalOpen(false)
-      window.location.reload()
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
     } catch (err) {
-      alert(err.message || 'Gagal memperbarui pengguna')
+      toast.error(err.message || 'Gagal memperbarui pengguna')
     }
   }
 
@@ -84,23 +90,26 @@ export default function AdminDashboard() {
     if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
       try {
         await deleteUserAPI(id)
-        alert('Berhasil menghapus pengguna')
-        window.location.reload()
+        toast.success('Berhasil menghapus pengguna')
+        setTimeout(() => {
+          window.location.reload()
+        }, 1500)
       } catch (err) {
-        alert(err.message || 'Gagal menghapus pengguna')
+        toast.error(err.message || 'Gagal menghapus pengguna')
       }
     }
   }
 
   // Calculate totals
-  const totalFilm = contents.filter(c => c.category_id === 2).length
-  const totalMusik = contents.filter(c => c.category_id === 3).length
-  const totalBerita = contents.filter(c => c.category_id === 1).length
+  const totalFilm = contents.filter(c => c.category_id === 2 || c.content_type_name === 'Movie').length
+  const totalMusik = contents.filter(c => c.category_id === 3 || c.content_type_name === 'Music').length
+  const totalBerita = contents.filter(c => c.category_id === 1 || c.content_type_name === 'News').length
 
   // Generate activities
   const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
   const categoryIcons = { 1: '📰', 2: '🎬', 3: '🎵' }
   const categoryColors = { 1: '#78350F', 2: '#1E3A8A', 3: '#064E3B' }
+  const typeMap = { News: 1, Movie: 2, Music: 3 }
   
   const activities = [...contents].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(c => {
     const timeDiff = Math.abs(new Date() - new Date(c.created_at))
@@ -117,12 +126,14 @@ export default function AdminDashboard() {
       timeAgo = 'BARU SAJA'
     }
     
+    const catId = c.category_id || typeMap[c.content_type_name]
+    
     return {
       id: c.id,
-      text: `${categoryNames[c.category_id] || 'Konten'} "${c.title}" berhasil diunggah oleh admin`,
+      text: `${categoryNames[catId] || 'Konten'} "${c.title}" berhasil diunggah oleh admin`,
       time: timeAgo,
-      icon: categoryIcons[c.category_id] || '📄',
-      color: categoryColors[c.category_id] || '#333'
+      icon: categoryIcons[catId] || '📄',
+      color: categoryColors[catId] || '#333'
     }
   })
   

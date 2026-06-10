@@ -6,9 +6,11 @@ import { getBookmarks, addBookmark, removeBookmark, isLoggedIn } from '../lib/ap
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents } from '../store/contentSlice'
 import { fetchBookmarksData, invalidateBookmarks } from '../store/userSlice'
+import { useToast } from '../contexts/ToastContext'
 
 export default function Film() {
   const dispatch = useDispatch()
+  const toast = useToast()
   const contents = useSelector((state) => state.content.items)
   const contentStatus = useSelector((state) => state.content.status)
 
@@ -19,37 +21,6 @@ export default function Film() {
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set())
   const bookmarks = useSelector((state) => state.user.bookmarks)
   const bookmarksStatus = useSelector((state) => state.user.bookmarksStatus)
-
-  const fallbackFilms = [
-    {
-      id: 1,
-      slug: 'miracle-in-cell-no-7',
-      title: 'Miracle in Cell No. 7',
-      meta: 'Drama, Family • 2022',
-      image: '/filmmiracle.svg'
-    },
-    {
-      id: 2,
-      slug: 'ipar-adalah-maut',
-      title: 'Ipar Adalah Maut',
-      meta: 'Drama • 2024',
-      image: '/filmiparadalahmaut.svg'
-    },
-    {
-      id: 3,
-      slug: 'danur-i-can-see-ghosts',
-      title: 'Danur: I Can See Ghosts',
-      meta: 'Horror • 2017',
-      image: '/filmdanur.svg'
-    },
-    {
-      id: 4,
-      slug: 'agak-laen',
-      title: 'Agak Laen',
-      meta: 'Comedy, Horror • 2024',
-      image: '/filmagaklain.svg'
-    },
-  ]
 
   useEffect(() => {
     if (contentStatus === 'idle') {
@@ -63,7 +34,7 @@ export default function Film() {
     } else if (contentStatus === 'succeeded' || contentStatus === 'failed') {
       if (contents && contents.length > 0) {
         const fetchedFilms = contents
-          .filter(item => item.category_id === 2)
+          .filter(item => item.category_id === 2 || item.content_type_name === 'Movie')
           .map((item) => {
             let sutradara = 'Tidak diketahui'
             let sinopsis = 'Film'
@@ -90,13 +61,9 @@ export default function Film() {
             }
           })
         
-        if (fetchedFilms.length > 0) {
-          setFilmItems(fetchedFilms)
-        } else {
-          setFilmItems(fallbackFilms)
-        }
+        setFilmItems(fetchedFilms)
       } else {
-        setFilmItems(fallbackFilms)
+        setFilmItems([])
       }
       setLoading(false)
     }
@@ -135,7 +102,7 @@ export default function Film() {
 
   const handleBookmark = async (id) => {
     if (!isLoggedIn()) {
-      alert("Silakan login untuk mengatur bookmark")
+      toast.warning("Silakan login untuk mengatur bookmark")
       return
     }
 
@@ -160,7 +127,7 @@ export default function Film() {
     } catch (err) {
       // Revert if failed
       setBookmarkedIds(bookmarkedIds)
-      alert("Gagal memperbarui bookmark: " + err.message)
+      toast.error("Gagal memperbarui bookmark: " + err.message)
     }
   }
 

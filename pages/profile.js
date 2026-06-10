@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Layout from '../components/Layout'
-import { updateUserAPI } from '../lib/api'
+import { updateUserAPI, uploadBase64API } from '../lib/api'
+import { useToast } from '../contexts/ToastContext'
 
 export default function Profile() {
   const router = useRouter()
+  const toast = useToast()
   const [user, setUser] = useState({ name: '', username: '', email: '' })
   
   // State for form
@@ -15,6 +17,7 @@ export default function Profile() {
     avatar: ''
   })
   
+  const [avatarFile, setAvatarFile] = useState(null)
   const fileInputRef = React.useRef(null)
 
   useEffect(() => {
@@ -45,18 +48,24 @@ export default function Profile() {
   const handleSave = async (e) => {
     e.preventDefault()
     try {
+      const uploadRes = await uploadBase64API(formData.avatar, 'user-avatar.jpg')
+      if (!uploadRes.success) {
+        throw new Error(uploadRes.message || "Gagal mengunggah foto profil ke Cloudinary")
+      }
+      const avatarUrl = uploadRes.imageUrl
+
       if (user.id) {
         await updateUserAPI(user.id, { 
           username: formData.username, 
           email: formData.email,
           role: user.roles?.[0], // Send existing role if any just in case, but backend doesn't require role for user update
-          avatar: formData.avatar
+          avatar: avatarUrl
         })
       }
       
-      const updatedUser = { ...user, name: formData.username, username: formData.username, email: formData.email, avatar: formData.avatar }
+      const updatedUser = { ...user, name: formData.username, username: formData.username, email: formData.email, avatar: avatarUrl }
       localStorage.setItem('currentUser', JSON.stringify(updatedUser))
-      alert('Profile berhasil diperbarui!')
+      toast.success('Profile berhasil diperbarui!')
       
       if (user.roles?.includes('admin')) {
         router.push('/admin')
@@ -64,13 +73,14 @@ export default function Profile() {
         router.push('/')
       }
     } catch (err) {
-      alert(err.message || 'Gagal memperbarui profile')
+      toast.error(err.message || 'Gagal memperbarui profile')
     }
   }
 
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      setAvatarFile(file)
       const reader = new FileReader()
       reader.onloadend = () => {
         setFormData({ ...formData, avatar: reader.result })

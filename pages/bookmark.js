@@ -5,10 +5,12 @@ import { removeBookmark, isLoggedIn } from '../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchBookmarksData, invalidateBookmarks } from '../store/userSlice'
+import { useToast } from '../contexts/ToastContext'
 
 export default function Bookmark() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   const bookmarks = useSelector((state) => state.user.bookmarks)
   const bookmarksStatus = useSelector((state) => state.user.bookmarksStatus)
 
@@ -21,25 +23,38 @@ export default function Bookmark() {
       setLoading(false)
       return
     }
-    dispatch(fetchBookmarksData())
-  }, [dispatch])
+    if (bookmarksStatus === 'idle') {
+      dispatch(fetchBookmarksData())
+    }
+  }, [dispatch, bookmarksStatus])
 
   useEffect(() => {
     if (bookmarksStatus === 'idle') {
       if (isLoggedIn()) setLoading(true)
     } else if (bookmarksStatus === 'succeeded' || bookmarksStatus === 'failed') {
       if (bookmarks && bookmarks.length > 0) {
-        const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
+        const typeMap = {
+            News: 'Berita',
+            Movie: 'Film',
+            Music: 'Musik'
+          }
         const items = bookmarks.map((item) => ({
           id: item.bookmark_id || item.id,
           content_id: item.id,
           title: item.title || 'Untitled',
-          type: categoryNames[item.category_id] || item.category || 'Lainnya',
+          type: typeMap[item.content_type_name] || 'Lainnya',
           dateAdded: item.created_at ? new Date(item.created_at).getFullYear().toString() : '2026',
           producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
           description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
           image: item.thumbnail || '/beritarekom1.svg',
         }))
+        console.log(
+            bookmarks.map(b => ({
+              title: b.title,
+              content_type_name: b.content_type_name,
+              category_names: b.category_names,
+            }))
+          )
         setBookmarkItems(items)
       } else {
         setBookmarkItems([])
@@ -62,24 +77,27 @@ export default function Bookmark() {
 
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) {
-      alert('Pilih item yang ingin dihapus dengan menceklis kotaknya terlebih dahulu.')
+      toast.warning('Pilih item yang ingin dihapus dengan menceklis kotaknya terlebih dahulu.')
       return
     }
 
     if (!confirm(`Hapus ${selectedIds.size} item terpilih?`)) return
 
     try {
-      // Create array of promises to delete all selected
+      setLoading(true)
       const deletePromises = Array.from(selectedIds).map(contentId => removeBookmark(contentId))
       await Promise.all(deletePromises)
       
       setSelectedIds(new Set())
-      dispatch(invalidateBookmarks()) // Refresh Redux state after delete
-      alert('Berhasil menghapus item.')
+      toast.success('Berhasil menghapus item.')
+      await dispatch(fetchBookmarksData()).unwrap()
     } catch (err) {
-      alert('Gagal menghapus beberapa item: ' + err.message)
+      toast.error('Gagal menghapus beberapa item: ' + err.message)
+    } finally {
+      setLoading(false)
     }
   }
+
 
   return (
     <Layout title="Bookmark - Final Project">

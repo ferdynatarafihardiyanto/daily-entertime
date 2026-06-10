@@ -1,13 +1,15 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect, useRef } from 'react'
-import { createContent, deleteContentAPI, updateContentAPI } from '../../lib/api'
+import { createContent, deleteContentAPI, updateContentAPI, uploadBase64API } from '../../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, invalidateContent } from '../../store/contentSlice'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function TambahMusik() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   
   // Data dari Redux
   const contents = useSelector((state) => state.content.items)
@@ -32,6 +34,7 @@ export default function TambahMusik() {
   const [audioFileName, setAudioFileName] = useState('')
   const [thumbnailBase64, setThumbnailBase64] = useState('')
   const [thumbnailFileName, setThumbnailFileName] = useState('')
+  const [thumbnailFile, setThumbnailFile] = useState(null)
   
   const audioInputRef = useRef(null)
   const coverInputRef = useRef(null)
@@ -49,7 +52,7 @@ export default function TambahMusik() {
       setIsLoading(false)
       if (contents) {
         const mappedMusics = contents
-          .filter(item => item.category_id === 3)
+          .filter(item => item.category_id === 3 || item.content_type_name === 'Music')
           .map(item => {
             let artist = 'Tidak diketahui'
             if (item.description && item.description.includes('Artis:')) {
@@ -87,6 +90,7 @@ export default function TambahMusik() {
   const handleCoverChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setThumbnailFile(file);
       setThumbnailFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -105,6 +109,7 @@ export default function TambahMusik() {
     setAudioFileName('')
     setThumbnailBase64('')
     setThumbnailFileName('')
+    setThumbnailFile(null)
     setShowForm(false)
   }
 
@@ -137,51 +142,73 @@ export default function TambahMusik() {
     if (confirm('Apakah Anda yakin ingin menghapus musik ini?')) {
       try {
         await deleteContentAPI(id)
-        alert('Musik berhasil dihapus!')
+        toast.success('Musik berhasil dihapus!')
         dispatch(invalidateContent())
         dispatch(fetchContents())
       } catch (error) {
-        alert('Gagal menghapus musik: ' + error.message)
+        toast.error('Gagal menghapus musik: ' + error.message)
       }
     }
   }
 
   const handleUnggah = async () => {
     if (!judulMusik) {
-      alert("Judul musik tidak boleh kosong!");
+      toast.warning("Judul musik tidak boleh kosong!");
       return;
     }
 
     const descriptionString = deskripsi ? `Artis: ${penyanyiMusik}\nDeskripsi: ${deskripsi}` : `Artis: ${penyanyiMusik}`;
     
     try {
+      // 1. Unggah gambar cover ke Cloudinary jika baru/base64
+      const coverRes = await uploadBase64API(thumbnailBase64, 'music-cover.jpg');
+      if (!coverRes.success) {
+        throw new Error(coverRes.message || "Gagal mengunggah cover album ke Cloudinary");
+      }
+      const imageUrl = coverRes.imageUrl;
+
+      // 2. Unggah file audio ke Cloudinary jika baru/base64
+      const audioRes = await uploadBase64API(audioBase64, 'music-audio.mp3');
+      if (!audioRes.success) {
+        throw new Error(audioRes.message || "Gagal mengunggah file audio ke Cloudinary");
+      }
+      const audioUrl = audioRes.imageUrl;
+
       if (editingId) {
         await updateContentAPI(editingId, {
           title: judulMusik,
           description: descriptionString,
-          thumbnail: thumbnailBase64 || undefined,
-          url: audioBase64 || undefined,
+          thumbnail: imageUrl || undefined,
+          url: audioUrl || undefined,
         });
-        alert("Berhasil! Musik berhasil diperbarui.");
+        toast.success("Berhasil! Musik berhasil diperbarui.");
       } else {
+        const slug = judulMusik
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w-]+/g, "");
+
         await createContent({
           title: judulMusik,
+          slug,
           description: descriptionString,
-          category_id: 3,
-          thumbnail: thumbnailBase64 || '/lagutaklagisama.svg',
-          url: audioBase64 || '#',
+          contentTypeId: 1,
+          thumbnail: imageUrl || '/lagutaklagisama.svg',
+          url: audioUrl || '#',
+          status: "published"
         });
-        alert("Berhasil! Musik berhasil ditambahkan ke database.");
+        toast.success("Berhasil! Musik berhasil ditambahkan ke database.");
       }
       dispatch(invalidateContent())
       dispatch(fetchContents())
       resetForm();
     } catch (err) {
       if (err.message && (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('sesi'))) {
-        alert("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
+        toast.error("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
         import('../../lib/api').then(({ logout }) => logout());
       } else {
-        alert("Gagal menyimpan musik: " + (err.message || "Terjadi kesalahan"));
+        toast.error("Gagal menyimpan musik: " + (err.message || "Terjadi kesalahan"));
       }
     }
   }
@@ -220,7 +247,7 @@ export default function TambahMusik() {
             </div>
 
             <div>
-              <label style={{ display: 'block', marginBottom: '10px', color: '#E5E7EB', borderLeft: '3px solid #A855F7', paddingLeft: '10px' }}>Deskripsi / Lirik (Opsional)</label>
+              <label style={{ display: 'block', marginBottom: '10px', color: '#E5E7EB', borderLeft: '3px solid #A855F7', paddingLeft: '10px' }}>Deskripsi / Lirik</label>
               <textarea placeholder="Masukan Deskripsi" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows="5" style={{ width: '100%', backgroundColor: '#2A2A2A', border: 'none', padding: '15px 20px', borderRadius: '8px', color: 'white', fontSize: '14px', outline: 'none', resize: 'none' }}></textarea>
             </div>
 

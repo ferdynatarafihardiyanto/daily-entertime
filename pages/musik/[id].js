@@ -4,9 +4,11 @@ import Layout from '../../components/Layout'
 import { getContentById, addBookmark, trackHistory, isLoggedIn } from '../../lib/api'
 import { useAudio } from '../../contexts/AudioContext'
 import { useSelector } from 'react-redux'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function MusicDetail() {
   const router = useRouter()
+  const toast = useToast()
   const { id } = router.query
   const [track, setTrack] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -125,12 +127,12 @@ export default function MusicDetail() {
     if (!track) return
     try {
       await addBookmark(track.id)
-      alert("Musik berhasil ditambahkan ke bookmark!")
+      toast.success("Musik berhasil ditambahkan ke bookmark!")
     } catch (err) {
       if (err.message.includes('Sesi telah berakhir')) {
-        alert("Silakan login untuk menambahkan bookmark")
+        toast.warning("Silakan login untuk menambahkan bookmark")
       } else {
-        alert("Gagal menambahkan bookmark: " + err.message)
+        toast.error("Gagal menambahkan bookmark: " + err.message)
       }
     }
   }

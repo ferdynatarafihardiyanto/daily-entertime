@@ -1,13 +1,15 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect, useRef } from 'react'
-import { createContent, deleteContentAPI, updateContentAPI } from '../../lib/api'
+import { createContent, deleteContentAPI, updateContentAPI, uploadBase64API } from '../../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, invalidateContent } from '../../store/contentSlice'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function TambahFilm() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   
   // Data dari Redux
   const contents = useSelector((state) => state.content.items)
@@ -30,6 +32,7 @@ export default function TambahFilm() {
   const [servers, setServers] = useState([{ id: 1, name: 'Server 1', link: '' }])
   const [thumbnailBase64, setThumbnailBase64] = useState('')
   const [thumbnailFileName, setThumbnailFileName] = useState('')
+  const [thumbnailFile, setThumbnailFile] = useState(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -45,7 +48,7 @@ export default function TambahFilm() {
       setIsLoading(false)
       if (contents) {
         const mappedFilms = contents
-          .filter(item => item.category_id === 2)
+          .filter(item => item.category_id === 2 || item.content_type_name === 'Movie')
           .map(item => {
             let sutradara = 'Tidak diketahui'
             if (item.description && item.description.includes('Sutradara:')) {
@@ -71,6 +74,7 @@ export default function TambahFilm() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setThumbnailFile(file);
       setThumbnailFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -110,6 +114,7 @@ export default function TambahFilm() {
     setServers([{ id: 1, name: 'Server 1', link: '' }])
     setThumbnailBase64('')
     setThumbnailFileName('')
+    setThumbnailFile(null)
     setShowForm(false)
   }
 
@@ -154,18 +159,18 @@ export default function TambahFilm() {
     if (confirm('Apakah Anda yakin ingin menghapus film ini?')) {
       try {
         await deleteContentAPI(id)
-        alert('Film berhasil dihapus!')
+        toast.success('Film berhasil dihapus!')
         dispatch(invalidateContent()) // Force fetch from server
         dispatch(fetchContents())
       } catch (error) {
-        alert('Gagal menghapus film: ' + error.message)
+        toast.error('Gagal menghapus film: ' + error.message)
       }
     }
   }
 
   const handleUnggah = async () => {
     if (!judulFilm) {
-      alert("Judul film tidak boleh kosong!");
+      toast.warning("Judul film tidak boleh kosong!");
       return;
     }
 
@@ -173,35 +178,49 @@ export default function TambahFilm() {
     const urlString = JSON.stringify(servers.filter(s => s.link.trim() !== '').map((s, idx) => ({ name: s.name || `Server ${idx + 1}`, link: s.link })));
 
     try {
+      const uploadRes = await uploadBase64API(thumbnailBase64, 'movie-poster.jpg');
+      if (!uploadRes.success) {
+        throw new Error(uploadRes.message || "Gagal mengunggah gambar ke Cloudinary");
+      }
+      const imageUrl = uploadRes.imageUrl;
+
       if (editingId) {
         // Edit mode
         await updateContentAPI(editingId, {
           title: judulFilm,
           description: descriptionString,
-          thumbnail: thumbnailBase64 || undefined, // keep old if not changing, but we loaded it into base64 state so it's fine
+          thumbnail: imageUrl || undefined, // keep old if not changing
           url: urlString,
         });
-        alert("Berhasil! Film berhasil diperbarui.");
+        toast.success("Berhasil! Film berhasil diperbarui.");
       } else {
         // Create mode
-        await createContent({
-          title: judulFilm,
-          description: descriptionString,
-          category_id: 2,
-          thumbnail: thumbnailBase64 || '/filmmiracle.svg',
-          url: urlString,
-        });
-        alert("Berhasil! Film berhasil ditambahkan ke database.");
+    const slug = judulFilm
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "");
+
+    await createContent({
+      title: judulFilm,
+      slug,
+      description: descriptionString,
+      contentTypeId: 2,
+      thumbnail: imageUrl || "",
+      status: "published",
+      url: urlString
+    });
+        toast.success("Berhasil! Film berhasil ditambahkan ke database.");
       }
       dispatch(invalidateContent());
       dispatch(fetchContents()); // Refresh data from server
       resetForm();
     } catch (err) {
       if (err.message && (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('sesi'))) {
-        alert("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
+        toast.error("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
         import('../../lib/api').then(({ logout }) => logout());
       } else {
-        alert("Gagal menyimpan film: " + (err.message || "Terjadi kesalahan"));
+        toast.error("Gagal menyimpan film: " + (err.message || "Terjadi kesalahan"));
       }
     }
   }

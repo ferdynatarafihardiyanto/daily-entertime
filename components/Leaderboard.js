@@ -20,7 +20,7 @@ export default function Leaderboard() {
     if (contentStatus === 'succeeded' || contentStatus === 'failed') {
       const data = contents || []
       const topFilms = data
-        .filter(item => item.category_id === 2)
+        .filter(item => item.category_id === 2 || item.content_type_name === 'Movie')
         .sort((a, b) => (b.view || 0) - (a.view || 0))
         .slice(0, 4)
       

@@ -5,10 +5,12 @@ import { removeHistory, isLoggedIn } from '../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchHistoryData, invalidateHistory } from '../store/userSlice'
+import { useToast } from '../contexts/ToastContext'
 
 export default function History() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   const historyData = useSelector((state) => state.user.history)
   const historyStatus = useSelector((state) => state.user.historyStatus)
 
@@ -21,20 +23,26 @@ export default function History() {
       setLoading(false)
       return
     }
-    dispatch(fetchHistoryData())
-  }, [dispatch])
+    if (historyStatus === 'idle') {
+      dispatch(fetchHistoryData())
+    }
+  }, [dispatch, historyStatus])
 
   useEffect(() => {
     if (historyStatus === 'idle') {
       if (isLoggedIn()) setLoading(true)
     } else if (historyStatus === 'succeeded' || historyStatus === 'failed') {
       if (historyData && historyData.length > 0) {
-        const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
+        const typeMap = {
+            News: 'Berita',
+            Movie: 'Film',
+            Music: 'Musik'
+          }
         const items = historyData.map((item) => ({
           id: item.history_id || item.id,
           content_id: item.content_id || item.id,
           title: item.title || 'Untitled',
-          type: categoryNames[item.category_id] || item.category || 'Lainnya',
+          type: typeMap[item.content_type_name] || 'Lainnya',
           dateAdded: item.viewed_at ? new Date(item.viewed_at).getFullYear().toString() : '2026',
           producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
           description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
@@ -62,21 +70,24 @@ export default function History() {
 
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) {
-      alert('Pilih item yang ingin dihapus dengan menceklis kotaknya terlebih dahulu.')
+      toast.warning('Pilih item yang ingin dihapus dengan menceklis kotaknya terlebih dahulu.')
       return
     }
 
     if (!confirm(`Hapus ${selectedIds.size} item riwayat terpilih?`)) return
 
     try {
+      setLoading(true)
       const deletePromises = Array.from(selectedIds).map(contentId => removeHistory(contentId))
       await Promise.all(deletePromises)
       
       setSelectedIds(new Set())
-      dispatch(invalidateHistory()) // Refresh Redux state after delete
-      alert('Berhasil menghapus item.')
+      toast.success('Berhasil menghapus item.')
+      await dispatch(fetchHistoryData()).unwrap()
     } catch (err) {
-      alert('Gagal menghapus beberapa item: ' + err.message)
+      toast.error('Gagal menghapus beberapa item: ' + err.message)
+    } finally {
+      setLoading(false)
     }
   }
 

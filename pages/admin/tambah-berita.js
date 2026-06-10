@@ -1,13 +1,15 @@
 import AdminLayout from '../../components/AdminLayout'
 import { useState, useEffect, useRef } from 'react'
-import { createContent, deleteContentAPI, updateContentAPI } from '../../lib/api'
+import { createContent, deleteContentAPI, updateContentAPI, uploadBase64API } from '../../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, invalidateContent } from '../../store/contentSlice'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function TambahBerita() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   
   // Data dari Redux
   const contents = useSelector((state) => state.content.items)
@@ -27,6 +29,7 @@ export default function TambahBerita() {
   
   const [thumbnailBase64, setThumbnailBase64] = useState('')
   const [thumbnailFileName, setThumbnailFileName] = useState('')
+  const [thumbnailFile, setThumbnailFile] = useState(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -42,7 +45,7 @@ export default function TambahBerita() {
       setIsLoading(false)
       if (contents) {
         const mappedNews = contents
-          .filter(item => item.category_id === 1)
+          .filter(item => item.category_id === 1 || item.content_type_name === 'News')
           .map(item => ({
             id: item.id,
             title: item.title,
@@ -60,6 +63,7 @@ export default function TambahBerita() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setThumbnailFile(file);
       setThumbnailFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -75,6 +79,7 @@ export default function TambahBerita() {
     setTeksBaru('')
     setThumbnailBase64('')
     setThumbnailFileName('')
+    setThumbnailFile(null)
     setShowForm(false)
   }
 
@@ -91,48 +96,62 @@ export default function TambahBerita() {
     if (confirm('Apakah Anda yakin ingin menghapus berita ini?')) {
       try {
         await deleteContentAPI(id)
-        alert('Berita berhasil dihapus!')
+        toast.success('Berita berhasil dihapus!')
         dispatch(invalidateContent())
         dispatch(fetchContents())
       } catch (error) {
-        alert('Gagal menghapus berita: ' + error.message)
+        toast.error('Gagal menghapus berita: ' + error.message)
       }
     }
   }
 
   const handleUnggah = async () => {
     if (!judulBaru) {
-      alert("Judul tidak boleh kosong!");
+      toast.warning("Judul tidak boleh kosong!");
       return;
     }
     
     try {
+      const uploadRes = await uploadBase64API(thumbnailBase64, 'news-poster.jpg');
+      if (!uploadRes.success) {
+        throw new Error(uploadRes.message || "Gagal mengunggah gambar ke Cloudinary");
+      }
+      const imageUrl = uploadRes.imageUrl;
+
       if (editingId) {
         await updateContentAPI(editingId, {
           title: judulBaru,
           description: teksBaru,
-          thumbnail: thumbnailBase64 || undefined,
+          thumbnail: imageUrl || undefined,
         });
-        alert("Berhasil! Berita berhasil diperbarui.");
+        toast.success("Berhasil! Berita berhasil diperbarui.");
       } else {
+        const slug = judulBaru
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w-]+/g, "");
+
         await createContent({
           title: judulBaru,
+          slug,
           description: teksBaru,
-          category_id: 1,
-          thumbnail: thumbnailBase64 || '/beritarekom1.svg',
-          url: '#',
+          contentTypeId: 3,
+          thumbnail: imageUrl || '/beritarekom1.svg',
+          status: "published",
+          url: '#'
         });
-        alert("Berhasil! Berita berhasil ditambahkan ke database.");
+        toast.success("Berhasil! Berita berhasil ditambahkan ke database.");
       }
       dispatch(invalidateContent())
       dispatch(fetchContents())
       resetForm();
     } catch (err) {
       if (err.message && (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('sesi'))) {
-        alert("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
+        toast.error("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
         import('../../lib/api').then(({ logout }) => logout());
       } else {
-        alert("Gagal menyimpan berita: " + (err.message || "Terjadi kesalahan"));
+        toast.error("Gagal menyimpan berita: " + (err.message || "Terjadi kesalahan"));
       }
     }
   }
