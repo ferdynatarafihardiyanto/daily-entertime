@@ -93,14 +93,15 @@ export default function AdminDashboard() {
   }
 
   // Calculate totals
-  const totalFilm = contents.filter(c => c.category_id === 2).length
-  const totalMusik = contents.filter(c => c.category_id === 3).length
-  const totalBerita = contents.filter(c => c.category_id === 1).length
+  const totalFilm = contents.filter(c => c.category_id === 2 || c.content_type_name === 'Movie').length
+  const totalMusik = contents.filter(c => c.category_id === 3 || c.content_type_name === 'Music').length
+  const totalBerita = contents.filter(c => c.category_id === 1 || c.content_type_name === 'News').length
 
   // Generate activities
   const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
   const categoryIcons = { 1: '📰', 2: '🎬', 3: '🎵' }
   const categoryColors = { 1: '#78350F', 2: '#1E3A8A', 3: '#064E3B' }
+  const typeMap = { News: 1, Movie: 2, Music: 3 }
   
   const activities = [...contents].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(c => {
     const timeDiff = Math.abs(new Date() - new Date(c.created_at))
@@ -117,12 +118,14 @@ export default function AdminDashboard() {
       timeAgo = 'BARU SAJA'
     }
     
+    const catId = c.category_id || typeMap[c.content_type_name]
+    
     return {
       id: c.id,
-      text: `${categoryNames[c.category_id] || 'Konten'} "${c.title}" berhasil diunggah oleh admin`,
+      text: `${categoryNames[catId] || 'Konten'} "${c.title}" berhasil diunggah oleh admin`,
       time: timeAgo,
-      icon: categoryIcons[c.category_id] || '📄',
-      color: categoryColors[c.category_id] || '#333'
+      icon: categoryIcons[catId] || '📄',
+      color: categoryColors[catId] || '#333'
     }
   })
   

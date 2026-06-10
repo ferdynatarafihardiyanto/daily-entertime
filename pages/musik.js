@@ -34,7 +34,7 @@ export default function Musik() {
     } else if (contentStatus === 'succeeded' || contentStatus === 'failed') {
       if (contents && contents.length > 0) {
         const fetchedMusic = contents
-          .filter(item => item.category_id === 3)
+          .filter(item => item.category_id === 3 || item.content_type_name === 'Music')
           .map((item) => {
             let artist = 'Musik'
             if (item.description && item.description.includes('Artis:')) {

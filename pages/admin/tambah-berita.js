@@ -43,7 +43,7 @@ export default function TambahBerita() {
       setIsLoading(false)
       if (contents) {
         const mappedNews = contents
-          .filter(item => item.category_id === 1)
+          .filter(item => item.category_id === 1 || item.content_type_name === 'News')
           .map(item => ({
             id: item.id,
             title: item.title,

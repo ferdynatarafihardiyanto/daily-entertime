@@ -25,6 +25,7 @@ export default function AktivitasPage() {
   const categoryNames = { 1: 'Berita', 2: 'Film', 3: 'Musik' }
   const categoryIcons = { 1: '📰', 2: '🎬', 3: '🎵' }
   const categoryColors = { 1: '#78350F', 2: '#1E3A8A', 3: '#064E3B' }
+  const typeMap = { News: 1, Movie: 2, Music: 3 }
   
   const activities = [...contents].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(c => {
     const timeDiff = Math.abs(new Date() - new Date(c.created_at))
@@ -41,12 +42,14 @@ export default function AktivitasPage() {
       timeAgo = 'BARU SAJA'
     }
     
+    const catId = c.category_id || typeMap[c.content_type_name]
+    
     return {
       id: c.id,
-      text: `${categoryNames[c.category_id] || 'Konten'} "${c.title}" berhasil diunggah oleh admin`,
+      text: `${categoryNames[catId] || 'Konten'} "${c.title}" berhasil diunggah oleh admin`,
       time: timeAgo,
-      icon: categoryIcons[c.category_id] || '📄',
-      color: categoryColors[c.category_id] || '#333'
+      icon: categoryIcons[catId] || '📄',
+      color: categoryColors[catId] || '#333'
     }
   })
 

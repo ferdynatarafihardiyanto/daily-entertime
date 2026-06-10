@@ -46,7 +46,7 @@ export default function TambahFilm() {
       setIsLoading(false)
       if (contents) {
         const mappedFilms = contents
-          .filter(item => item.category_id === 2)
+          .filter(item => item.category_id === 2 || item.content_type_name === 'Movie')
           .map(item => {
             let sutradara = 'Tidak diketahui'
             if (item.description && item.description.includes('Sutradara:')) {
