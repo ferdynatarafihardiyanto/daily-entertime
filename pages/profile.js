@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Layout from '../components/Layout'
 import { updateUserAPI, uploadBase64API } from '../lib/api'
+import { useToast } from '../contexts/ToastContext'
 
 export default function Profile() {
   const router = useRouter()
+  const toast = useToast()
   const [user, setUser] = useState({ name: '', username: '', email: '' })
   
   // State for form
@@ -63,7 +65,7 @@ export default function Profile() {
       
       const updatedUser = { ...user, name: formData.username, username: formData.username, email: formData.email, avatar: avatarUrl }
       localStorage.setItem('currentUser', JSON.stringify(updatedUser))
-      alert('Profile berhasil diperbarui!')
+      toast.success('Profile berhasil diperbarui!')
       
       if (user.roles?.includes('admin')) {
         router.push('/admin')
@@ -71,7 +73,7 @@ export default function Profile() {
         router.push('/')
       }
     } catch (err) {
-      alert(err.message || 'Gagal memperbarui profile')
+      toast.error(err.message || 'Gagal memperbarui profile')
     }
   }
 

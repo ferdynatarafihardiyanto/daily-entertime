@@ -4,10 +4,12 @@ import { createContent, deleteContentAPI, updateContentAPI, uploadBase64API } fr
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, invalidateContent } from '../../store/contentSlice'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function TambahBerita() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   
   // Data dari Redux
   const contents = useSelector((state) => state.content.items)
@@ -94,18 +96,18 @@ export default function TambahBerita() {
     if (confirm('Apakah Anda yakin ingin menghapus berita ini?')) {
       try {
         await deleteContentAPI(id)
-        alert('Berita berhasil dihapus!')
+        toast.success('Berita berhasil dihapus!')
         dispatch(invalidateContent())
         dispatch(fetchContents())
       } catch (error) {
-        alert('Gagal menghapus berita: ' + error.message)
+        toast.error('Gagal menghapus berita: ' + error.message)
       }
     }
   }
 
   const handleUnggah = async () => {
     if (!judulBaru) {
-      alert("Judul tidak boleh kosong!");
+      toast.warning("Judul tidak boleh kosong!");
       return;
     }
     
@@ -122,7 +124,7 @@ export default function TambahBerita() {
           description: teksBaru,
           thumbnail: imageUrl || undefined,
         });
-        alert("Berhasil! Berita berhasil diperbarui.");
+        toast.success("Berhasil! Berita berhasil diperbarui.");
       } else {
         const slug = judulBaru
           .toLowerCase()
@@ -139,17 +141,17 @@ export default function TambahBerita() {
           status: "published",
           url: '#'
         });
-        alert("Berhasil! Berita berhasil ditambahkan ke database.");
+        toast.success("Berhasil! Berita berhasil ditambahkan ke database.");
       }
       dispatch(invalidateContent())
       dispatch(fetchContents())
       resetForm();
     } catch (err) {
       if (err.message && (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('sesi'))) {
-        alert("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
+        toast.error("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
         import('../../lib/api').then(({ logout }) => logout());
       } else {
-        alert("Gagal menyimpan berita: " + (err.message || "Terjadi kesalahan"));
+        toast.error("Gagal menyimpan berita: " + (err.message || "Terjadi kesalahan"));
       }
     }
   }

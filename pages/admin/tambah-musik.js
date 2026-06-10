@@ -4,10 +4,12 @@ import { createContent, deleteContentAPI, updateContentAPI, uploadBase64API } fr
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, invalidateContent } from '../../store/contentSlice'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function TambahMusik() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   
   // Data dari Redux
   const contents = useSelector((state) => state.content.items)
@@ -140,18 +142,18 @@ export default function TambahMusik() {
     if (confirm('Apakah Anda yakin ingin menghapus musik ini?')) {
       try {
         await deleteContentAPI(id)
-        alert('Musik berhasil dihapus!')
+        toast.success('Musik berhasil dihapus!')
         dispatch(invalidateContent())
         dispatch(fetchContents())
       } catch (error) {
-        alert('Gagal menghapus musik: ' + error.message)
+        toast.error('Gagal menghapus musik: ' + error.message)
       }
     }
   }
 
   const handleUnggah = async () => {
     if (!judulMusik) {
-      alert("Judul musik tidak boleh kosong!");
+      toast.warning("Judul musik tidak boleh kosong!");
       return;
     }
 
@@ -179,7 +181,7 @@ export default function TambahMusik() {
           thumbnail: imageUrl || undefined,
           url: audioUrl || undefined,
         });
-        alert("Berhasil! Musik berhasil diperbarui.");
+        toast.success("Berhasil! Musik berhasil diperbarui.");
       } else {
         const slug = judulMusik
           .toLowerCase()
@@ -196,17 +198,17 @@ export default function TambahMusik() {
           url: audioUrl || '#',
           status: "published"
         });
-        alert("Berhasil! Musik berhasil ditambahkan ke database.");
+        toast.success("Berhasil! Musik berhasil ditambahkan ke database.");
       }
       dispatch(invalidateContent())
       dispatch(fetchContents())
       resetForm();
     } catch (err) {
       if (err.message && (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('sesi'))) {
-        alert("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
+        toast.error("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
         import('../../lib/api').then(({ logout }) => logout());
       } else {
-        alert("Gagal menyimpan musik: " + (err.message || "Terjadi kesalahan"));
+        toast.error("Gagal menyimpan musik: " + (err.message || "Terjadi kesalahan"));
       }
     }
   }
@@ -245,7 +247,7 @@ export default function TambahMusik() {
             </div>
 
             <div>
-              <label style={{ display: 'block', marginBottom: '10px', color: '#E5E7EB', borderLeft: '3px solid #A855F7', paddingLeft: '10px' }}>Deskripsi / Lirik (Opsional)</label>
+              <label style={{ display: 'block', marginBottom: '10px', color: '#E5E7EB', borderLeft: '3px solid #A855F7', paddingLeft: '10px' }}>Deskripsi / Lirik</label>
               <textarea placeholder="Masukan Deskripsi" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows="5" style={{ width: '100%', backgroundColor: '#2A2A2A', border: 'none', padding: '15px 20px', borderRadius: '8px', color: 'white', fontSize: '14px', outline: 'none', resize: 'none' }}></textarea>
             </div>
 

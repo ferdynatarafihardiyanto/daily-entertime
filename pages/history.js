@@ -5,10 +5,12 @@ import { removeHistory, isLoggedIn } from '../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchHistoryData, invalidateHistory } from '../store/userSlice'
+import { useToast } from '../contexts/ToastContext'
 
 export default function History() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   const historyData = useSelector((state) => state.user.history)
   const historyStatus = useSelector((state) => state.user.historyStatus)
 
@@ -21,8 +23,10 @@ export default function History() {
       setLoading(false)
       return
     }
-    dispatch(fetchHistoryData())
-  }, [dispatch])
+    if (historyStatus === 'idle') {
+      dispatch(fetchHistoryData())
+    }
+  }, [dispatch, historyStatus])
 
   useEffect(() => {
     if (historyStatus === 'idle') {
@@ -66,21 +70,24 @@ export default function History() {
 
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) {
-      alert('Pilih item yang ingin dihapus dengan menceklis kotaknya terlebih dahulu.')
+      toast.warning('Pilih item yang ingin dihapus dengan menceklis kotaknya terlebih dahulu.')
       return
     }
 
     if (!confirm(`Hapus ${selectedIds.size} item riwayat terpilih?`)) return
 
     try {
+      setLoading(true)
       const deletePromises = Array.from(selectedIds).map(contentId => removeHistory(contentId))
       await Promise.all(deletePromises)
       
       setSelectedIds(new Set())
-      dispatch(invalidateHistory()) // Refresh Redux state after delete
-      alert('Berhasil menghapus item.')
+      toast.success('Berhasil menghapus item.')
+      await dispatch(fetchHistoryData()).unwrap()
     } catch (err) {
-      alert('Gagal menghapus beberapa item: ' + err.message)
+      toast.error('Gagal menghapus beberapa item: ' + err.message)
+    } finally {
+      setLoading(false)
     }
   }
 

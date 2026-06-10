@@ -5,10 +5,12 @@ import { removeBookmark, isLoggedIn } from '../lib/api'
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchBookmarksData, invalidateBookmarks } from '../store/userSlice'
+import { useToast } from '../contexts/ToastContext'
 
 export default function Bookmark() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   const bookmarks = useSelector((state) => state.user.bookmarks)
   const bookmarksStatus = useSelector((state) => state.user.bookmarksStatus)
 
@@ -21,8 +23,10 @@ export default function Bookmark() {
       setLoading(false)
       return
     }
-    dispatch(fetchBookmarksData())
-  }, [dispatch])
+    if (bookmarksStatus === 'idle') {
+      dispatch(fetchBookmarksData())
+    }
+  }, [dispatch, bookmarksStatus])
 
   useEffect(() => {
     if (bookmarksStatus === 'idle') {
@@ -73,24 +77,27 @@ export default function Bookmark() {
 
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) {
-      alert('Pilih item yang ingin dihapus dengan menceklis kotaknya terlebih dahulu.')
+      toast.warning('Pilih item yang ingin dihapus dengan menceklis kotaknya terlebih dahulu.')
       return
     }
 
     if (!confirm(`Hapus ${selectedIds.size} item terpilih?`)) return
 
     try {
-      // Create array of promises to delete all selected
+      setLoading(true)
       const deletePromises = Array.from(selectedIds).map(contentId => removeBookmark(contentId))
       await Promise.all(deletePromises)
       
       setSelectedIds(new Set())
-      dispatch(invalidateBookmarks()) // Refresh Redux state after delete
-      alert('Berhasil menghapus item.')
+      toast.success('Berhasil menghapus item.')
+      await dispatch(fetchBookmarksData()).unwrap()
     } catch (err) {
-      alert('Gagal menghapus beberapa item: ' + err.message)
+      toast.error('Gagal menghapus beberapa item: ' + err.message)
+    } finally {
+      setLoading(false)
     }
   }
+
 
   return (
     <Layout title="Bookmark - Final Project">

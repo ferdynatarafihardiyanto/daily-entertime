@@ -58,33 +58,41 @@ export default function Login() {
             film, musik, berita seru, dan<br />
             banyak lagi setiap hari.
           </p>
-
-          {/* Info box */}
-          <div style={{
-            marginTop: '40px',
-            padding: '16px 20px',
-            backgroundColor: 'rgba(168,85,247,0.1)',
-            border: '1px solid rgba(168,85,247,0.3)',
-            borderRadius: '12px',
-            fontSize: '13px',
-            color: '#D1D5DB',
-          }}>
-            <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#A855F7' }}>🔗 Terintegrasi dengan Backend</p>
-            <p style={{ margin: '2px 0' }}>Login menggunakan akun yang sudah terdaftar di database.</p>
-            <p style={{ margin: '2px 0' }}>Belum punya akun? <Link href="/register" style={{ color: '#E9D5FF' }}>Daftar di sini</Link></p>
-          </div>
         </div>
 
         {/* Right Login Card */}
         <div className="login-card-wrapper">
           <div className="login-card">
+            {/* Back Button */}
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#6B7280',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '20px',
+                padding: '0',
+                fontSize: '14px'
+              }}
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Kembali ke Beranda
+            </button>
+
             {/* Logo */}
             <div className="login-logo">
               <img src="/logo%20navbar.png" alt="DE Logo" className="login-logo-img" />
             </div>
 
             {/* Welcome Text */}
-            <h2 className="login-welcome">Welcome Back 👋</h2>
+            <h2 className="login-welcome">Welcome Back </h2>
             <p className="login-subtext">Lanjut untuk menikmati hiburan favoritmu</p>
 
             {/* Error message */}

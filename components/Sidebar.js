@@ -106,77 +106,123 @@ export default function Sidebar({ onClose }) {
 
       {/* Nav items */}
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '25px' }}>
-        {menuItems.map((item) => {
-          const isActive = router.pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.isComingSoon ? '#' : item.href}
-              onClick={(e) => {
-                if (item.isComingSoon) {
-                  e.preventDefault();
-                  alert("Fitur ini akan segera hadir di update selanjutnya");
-                }
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '15px',
-                color: isActive ? 'white' : '#9CA3AF',
-                textDecoration: 'none',
-                fontSize: '16px',
-                paddingLeft: '10px',
-                transition: 'color 0.15s',
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</span>
-              <span style={{ fontWeight: isActive ? 'bold' : 'normal', flex: 1 }}>{item.label}</span>
-              {item.isComingSoon && (
-                <span style={{ 
-                  fontSize: '9px', 
-                  backgroundColor: '#A855F7', 
-                  color: 'white', 
-                  padding: '2px 6px', 
-                  borderRadius: '10px',
-                  fontWeight: 'bold',
-                  textTransform: 'uppercase',
-                  whiteSpace: 'nowrap'
-                }}>
-                  Coming Soon
-                </span>
-              )}
-            </Link>
-          )
-        })}
+        {user ? (
+          menuItems.map((item) => {
+            const isActive = router.pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.isComingSoon ? '#' : item.href}
+                onClick={(e) => {
+                  if (item.isComingSoon) {
+                    e.preventDefault();
+                    alert("Fitur ini akan segera hadir di update selanjutnya");
+                  }
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '15px',
+                  color: isActive ? 'white' : '#9CA3AF',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  paddingLeft: '10px',
+                  transition: 'color 0.15s',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</span>
+                <span style={{ fontWeight: isActive ? 'bold' : 'normal', flex: 1 }}>{item.label}</span>
+                {item.isComingSoon && (
+                  <span style={{ 
+                    fontSize: '9px', 
+                    backgroundColor: '#A855F7', 
+                    color: 'white', 
+                    padding: '2px 6px', 
+                    borderRadius: '10px',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    Coming Soon
+                  </span>
+                )}
+              </Link>
+            )
+          })
+        ) : (
+          <div style={{ textAlign: 'center', marginTop: '40px', padding: '0 10px' }}>
+            <svg style={{ color: '#A855F7', marginBottom: '20px' }} width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h3 style={{ color: 'white', fontSize: '18px', fontWeight: 'bold', marginBottom: '10px' }}>Akses Hiburan</h3>
+            <p style={{ color: '#9CA3AF', fontSize: '14px', lineHeight: '1.6' }}>
+              Login sekarang untuk menikmati film seru, musik trending, dan update berita terkini tanpa batas.
+            </p>
+          </div>
+        )}
       </nav>
 
-      {/* Logout at bottom */}
-      <button
-        onClick={() => {
-          import('../lib/api').then(({ logout }) => logout());
-        }}
-        style={{
-          backgroundColor: '#FF0000',
-          color: 'white',
-          border: 'none',
-          padding: '14px',
-          borderRadius: '12px',
-          fontWeight: 'bold',
-          fontSize: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          gap: '15px',
-          cursor: 'pointer',
-          width: '100%',
-          marginTop: '20px'
-        }}
-      >
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-        </svg>
-        Log Out
-      </button>
+      {/* Logout/Login at bottom */}
+      <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
+        {user ? (
+          <button
+            onClick={() => {
+              import('../lib/api').then(({ logout }) => logout());
+            }}
+            style={{
+              backgroundColor: '#FF0000',
+              color: 'white',
+              border: 'none',
+              padding: '14px',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              gap: '15px',
+              cursor: 'pointer',
+              width: '100%',
+            }}
+          >
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Log Out
+          </button>
+        ) : (
+          <div>
+            <div style={{ backgroundColor: '#1A1A1A', padding: '15px', borderRadius: '12px', marginBottom: '15px' }}>
+              <p style={{ color: '#9CA3AF', fontSize: '12px', margin: 0, textAlign: 'center', lineHeight: '1.5' }}>
+                Masuk untuk pengalaman yang lebih personal dan akses ke fitur lengkap.
+              </p>
+            </div>
+            <button
+              onClick={() => router.push('/login')}
+              style={{
+                backgroundColor: '#A855F7',
+                color: 'white',
+                border: 'none',
+                padding: '14px',
+                borderRadius: '12px',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                cursor: 'pointer',
+                width: '100%',
+              }}
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Masuk / Daftar
+            </button>
+          </div>
+        )}
+      </div>
     </aside>
   )
 }

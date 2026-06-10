@@ -32,14 +32,14 @@ export default function Layout({ children, title = 'Final Project', isHome = fal
       </Head>
 
       <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'black' }}>
-        {/* Sidebar - hanya tampil jika sudah login dan sidebar terbuka */}
-        {isLoggedIn && isSidebarOpen && <Sidebar onClose={() => {
+        {/* Sidebar - tampil jika sidebar terbuka */}
+        {isSidebarOpen && <Sidebar onClose={() => {
           setIsSidebarOpen(false)
           localStorage.setItem('sidebarOpen', JSON.stringify(false))
         }} />}
 
         {/* Spacer for fixed sidebar */}
-        {isLoggedIn && isSidebarOpen && <div style={{ width: '260px', flexShrink: 0 }} />}
+        {isSidebarOpen && <div style={{ width: '260px', flexShrink: 0 }} />}
 
         {/* Main content */}
         <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
