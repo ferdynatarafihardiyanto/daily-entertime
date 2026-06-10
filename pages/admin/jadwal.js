@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react'
 import { createSchedule } from '../../lib/api'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, fetchSchedulesData, invalidateSchedules } from '../../store/contentSlice'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function JadwalMingguan() {
   const dispatch = useDispatch()
+  const toast = useToast()
   const contents = useSelector((state) => state.content.items)
   const contentStatus = useSelector((state) => state.content.status)
   
@@ -94,7 +96,7 @@ export default function JadwalMingguan() {
 
   const handleAddSchedule = async () => {
     if (!newSchedule.contentId || !newSchedule.date) {
-      alert("Pilih nama dan tanggal terlebih dahulu")
+      toast.warning("Pilih nama dan tanggal terlebih dahulu")
       return
     }
 
@@ -108,7 +110,7 @@ export default function JadwalMingguan() {
     })
 
     if (dateExists) {
-      alert("Mohon maaf, sudah ada jadwal pada tanggal tersebut. Silakan pilih tanggal lain.")
+      toast.warning("Mohon maaf, sudah ada jadwal pada tanggal tersebut. Silakan pilih tanggal lain.")
       return
     }
 
@@ -118,11 +120,11 @@ export default function JadwalMingguan() {
         startDatetime: newSchedule.date + 'T00:00:00Z',
         title: contents.find(c => c.id == newSchedule.contentId)?.title || 'Jadwal',
       })
-      alert("Jadwal berhasil ditambahkan!")
+      toast.success("Jadwal berhasil ditambahkan!")
       dispatch(invalidateSchedules())
       setShowModal(false)
     } catch (err) {
-      alert("Gagal menambahkan jadwal: " + err.message)
+      toast.error("Gagal menambahkan jadwal: " + err.message)
     }
   }
 

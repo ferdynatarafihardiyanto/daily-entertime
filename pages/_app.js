@@ -14,6 +14,7 @@ if (typeof window !== 'undefined') {
 }
 
 import { AudioProvider } from '../contexts/AudioContext'
+import { ToastProvider } from '../contexts/ToastContext'
 import GlobalPlayer from '../components/GlobalPlayer'
 
 import { Provider } from 'react-redux'
@@ -23,8 +24,10 @@ function MyApp({ Component, pageProps }) {
   return (
     <Provider store={store}>
       <AudioProvider>
-        <Component {...pageProps} />
-        <GlobalPlayer />
+        <ToastProvider>
+          <Component {...pageProps} />
+          <GlobalPlayer />
+        </ToastProvider>
       </AudioProvider>
     </Provider>
   )

@@ -58,21 +58,6 @@ export default function Login() {
             film, musik, berita seru, dan<br />
             banyak lagi setiap hari.
           </p>
-
-          {/* Info box */}
-          <div style={{
-            marginTop: '40px',
-            padding: '16px 20px',
-            backgroundColor: 'rgba(168,85,247,0.1)',
-            border: '1px solid rgba(168,85,247,0.3)',
-            borderRadius: '12px',
-            fontSize: '13px',
-            color: '#D1D5DB',
-          }}>
-            <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#A855F7' }}>🔗 Terintegrasi dengan Backend</p>
-            <p style={{ margin: '2px 0' }}>Login menggunakan akun yang sudah terdaftar di database.</p>
-            <p style={{ margin: '2px 0' }}>Belum punya akun? <Link href="/register" style={{ color: '#E9D5FF' }}>Daftar di sini</Link></p>
-          </div>
         </div>
 
         {/* Right Login Card */}
@@ -84,7 +69,7 @@ export default function Login() {
             </div>
 
             {/* Welcome Text */}
-            <h2 className="login-welcome">Welcome Back 👋</h2>
+            <h2 className="login-welcome">Welcome Back </h2>
             <p className="login-subtext">Lanjut untuk menikmati hiburan favoritmu</p>
 
             {/* Error message */}

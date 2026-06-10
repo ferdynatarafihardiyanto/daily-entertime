@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AdminLayout from '../../components/AdminLayout'
 import { getAllUsers, createUserAPI, updateUserAPI, deleteUserAPI, getContents } from '../../lib/api'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function AdminDashboard() {
+  const toast = useToast()
   const [users, setUsers] = useState([])
   const [contents, setContents] = useState([])
   const [userPage, setUserPage] = useState(1)
@@ -48,13 +50,15 @@ export default function AdminDashboard() {
     e.preventDefault()
     try {
       await createUserAPI(formData)
-      alert('Berhasil menambahkan pengguna')
+      toast.success('Berhasil menambahkan pengguna')
       setIsModalOpen(false)
       setFormData({ username: '', email: '', password: '', role: 'user' })
       // Refresh the page or fetch users again to update list
-      window.location.reload()
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
     } catch (err) {
-      alert(err.message || 'Gagal menambahkan pengguna')
+      toast.error(err.message || 'Gagal menambahkan pengguna')
     }
   }
 
@@ -72,11 +76,13 @@ export default function AdminDashboard() {
     e.preventDefault()
     try {
       await updateUserAPI(editFormData.id, editFormData)
-      alert('Berhasil memperbarui pengguna')
+      toast.success('Berhasil memperbarui pengguna')
       setIsEditModalOpen(false)
-      window.location.reload()
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
     } catch (err) {
-      alert(err.message || 'Gagal memperbarui pengguna')
+      toast.error(err.message || 'Gagal memperbarui pengguna')
     }
   }
 
@@ -84,10 +90,12 @@ export default function AdminDashboard() {
     if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
       try {
         await deleteUserAPI(id)
-        alert('Berhasil menghapus pengguna')
-        window.location.reload()
+        toast.success('Berhasil menghapus pengguna')
+        setTimeout(() => {
+          window.location.reload()
+        }, 1500)
       } catch (err) {
-        alert(err.message || 'Gagal menghapus pengguna')
+        toast.error(err.message || 'Gagal menghapus pengguna')
       }
     }
   }

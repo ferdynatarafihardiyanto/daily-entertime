@@ -7,9 +7,11 @@ import { useAudio } from '../contexts/AudioContext'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents } from '../store/contentSlice'
 import { fetchBookmarksData, invalidateBookmarks } from '../store/userSlice'
+import { useToast } from '../contexts/ToastContext'
 
 export default function Musik() {
   const dispatch = useDispatch()
+  const toast = useToast()
   const contents = useSelector((state) => state.content.items)
   const contentStatus = useSelector((state) => state.content.status)
 
@@ -96,7 +98,7 @@ export default function Musik() {
 
   const handleBookmark = async (id) => {
     if (!isLoggedIn()) {
-      alert("Silakan login untuk mengatur bookmark")
+      toast.warning("Silakan login untuk mengatur bookmark")
       return
     }
 
@@ -121,7 +123,7 @@ export default function Musik() {
     } catch (err) {
       // Revert if failed
       setBookmarkedIds(bookmarkedIds)
-      alert("Gagal memperbarui bookmark: " + err.message)
+      toast.error("Gagal memperbarui bookmark: " + err.message)
     }
   }
 

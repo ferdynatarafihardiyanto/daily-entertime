@@ -4,10 +4,12 @@ import { createContent, deleteContentAPI, updateContentAPI, uploadBase64API } fr
 import { useRouter } from 'next/router'
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchContents, invalidateContent } from '../../store/contentSlice'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function TambahFilm() {
   const router = useRouter()
   const dispatch = useDispatch()
+  const toast = useToast()
   
   // Data dari Redux
   const contents = useSelector((state) => state.content.items)
@@ -157,18 +159,18 @@ export default function TambahFilm() {
     if (confirm('Apakah Anda yakin ingin menghapus film ini?')) {
       try {
         await deleteContentAPI(id)
-        alert('Film berhasil dihapus!')
+        toast.success('Film berhasil dihapus!')
         dispatch(invalidateContent()) // Force fetch from server
         dispatch(fetchContents())
       } catch (error) {
-        alert('Gagal menghapus film: ' + error.message)
+        toast.error('Gagal menghapus film: ' + error.message)
       }
     }
   }
 
   const handleUnggah = async () => {
     if (!judulFilm) {
-      alert("Judul film tidak boleh kosong!");
+      toast.warning("Judul film tidak boleh kosong!");
       return;
     }
 
@@ -190,7 +192,7 @@ export default function TambahFilm() {
           thumbnail: imageUrl || undefined, // keep old if not changing
           url: urlString,
         });
-        alert("Berhasil! Film berhasil diperbarui.");
+        toast.success("Berhasil! Film berhasil diperbarui.");
       } else {
         // Create mode
     const slug = judulFilm
@@ -208,17 +210,17 @@ export default function TambahFilm() {
       status: "published",
       url: urlString
     });
-        alert("Berhasil! Film berhasil ditambahkan ke database.");
+        toast.success("Berhasil! Film berhasil ditambahkan ke database.");
       }
       dispatch(invalidateContent());
       dispatch(fetchContents()); // Refresh data from server
       resetForm();
     } catch (err) {
       if (err.message && (err.message.toLowerCase().includes('token') || err.message.toLowerCase().includes('sesi'))) {
-        alert("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
+        toast.error("Sesi login Anda telah berakhir atau tidak valid. Anda akan diarahkan ke halaman login. Silakan login kembali untuk melanjutkan.");
         import('../../lib/api').then(({ logout }) => logout());
       } else {
-        alert("Gagal menyimpan film: " + (err.message || "Terjadi kesalahan"));
+        toast.error("Gagal menyimpan film: " + (err.message || "Terjadi kesalahan"));
       }
     }
   }
