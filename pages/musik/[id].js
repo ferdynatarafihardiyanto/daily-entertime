@@ -20,6 +20,10 @@ export default function MusicDetail() {
   const { currentTrack, isPlaying, currentTime, duration, playTrack, togglePlay, seek, nextTrack, previousTrack, playlist } = useAudio()
 
   useEffect(() => {
+    if (!isLoggedIn()) {
+      router.push('/login')
+      return
+    }
     if (!id) return
 
     // Coba ambil dari cache Redux dulu
