@@ -78,6 +78,29 @@ export default function Login() {
         {/* Right Login Card */}
         <div className="login-card-wrapper">
           <div className="login-card">
+            {/* Back Button */}
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#6B7280',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '20px',
+                padding: '0',
+                fontSize: '14px'
+              }}
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Kembali ke Beranda
+            </button>
+
             {/* Logo */}
             <div className="login-logo">
               <img src="/logo%20navbar.png" alt="DE Logo" className="login-logo-img" />

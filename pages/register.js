@@ -77,6 +77,28 @@ export default function Register() {
         {/* Right Register Card */}
         <div className="register-card-wrapper" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="register-card" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '40px', width: '100%', maxWidth: '500px', color: 'black' }}>
+            {/* Back Button */}
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#6B7280',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '20px',
+                padding: '0',
+                fontSize: '14px'
+              }}
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Kembali ke Beranda
+            </button>
 
             {/* Welcome Text */}
             <h2 className="register-welcome" style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>Create your Account</h2>

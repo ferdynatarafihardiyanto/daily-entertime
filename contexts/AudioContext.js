@@ -68,6 +68,14 @@ export function AudioProvider({ children }) {
   }, [isPlaying, currentTrack]);
 
   const playTrack = (track) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert("Silakan login terlebih dahulu untuk memutar musik.");
+        window.location.href = '/login';
+        return;
+      }
+    }
     if (currentTrack && currentTrack.id === track.id) {
       setIsPlaying(true);
     } else {
