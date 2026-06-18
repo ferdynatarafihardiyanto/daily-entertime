@@ -38,16 +38,27 @@ export default function History() {
             Movie: 'Film',
             Music: 'Musik'
           }
-        const items = historyData.map((item) => ({
-          id: item.history_id || item.id,
-          content_id: item.content_id || item.id,
-          title: item.title || 'Untitled',
-          type: typeMap[item.content_type_name] || 'Lainnya',
-          dateAdded: item.viewed_at ? new Date(item.viewed_at).getFullYear().toString() : '2026',
-          producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
-          description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
-          image: item.thumbnail || '/filmmiracle.svg',
-        }))
+        const items = historyData.map((item) => {
+          let dateAdded = '2026'
+          if (item.viewed_at) {
+            const date = new Date(item.viewed_at)
+            const day = date.getDate()
+            const month = date.toLocaleString('id-ID', { month: 'short' })
+            const year = date.getFullYear()
+            const time = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+            dateAdded = `${day} ${month} ${year}, ${time}`
+          }
+          return {
+            id: item.history_id || item.id,
+            content_id: item.content_id || item.id,
+            title: item.title || 'Untitled',
+            type: typeMap[item.content_type_name] || 'Lainnya',
+            dateAdded: dateAdded,
+            producer: item.description && item.description.includes('Sutradara:') ? item.description.split('\n')[0].replace('Sutradara: ', '').trim() : (item.description && item.description.includes('Artis:') ? item.description.split('\n')[0].replace('Artis: ', '').trim() : 'N/A'),
+            description: item.description ? (item.description.includes('Sinopsis:') ? item.description.split('Sinopsis:')[1].trim() : (item.description.includes('Deskripsi:') ? item.description.split('Deskripsi:')[1].trim() : item.description)).substring(0, 50) + '...' : 'Tidak ada deskripsi',
+            image: item.thumbnail || '/filmmiracle.svg',
+          }
+        })
         setHistoryItems(items)
       } else {
         setHistoryItems([])
