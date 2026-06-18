@@ -100,6 +100,17 @@ export default function JadwalMingguan() {
       return
     }
 
+    // Validation: Check if selected date is in the past
+    const selectedDate = new Date(newSchedule.date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    selectedDate.setHours(0, 0, 0, 0)
+    
+    if (selectedDate < today) {
+      toast.error("Tidak bisa menambahkan jadwal ke hari yang sudah lewat. Silakan pilih tanggal hari ini atau yang akan datang.")
+      return
+    }
+
     // Validation: Check if there's already a schedule on the selected date
     const selectedDateStr = newSchedule.date
     const dateExists = schedules.some(s => {
