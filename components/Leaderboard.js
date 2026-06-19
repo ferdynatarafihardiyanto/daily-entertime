@@ -21,7 +21,7 @@ export default function Leaderboard() {
       const data = contents || []
       const topFilms = data
         .filter(item => item.category_id === 2 || item.content_type_name === 'Movie')
-        .sort((a, b) => (b.view || 0) - (a.view || 0))
+        .sort((a, b) => (b.views_count || 0) - (a.views_count || 0))
         .slice(0, 4)
       
       setFilms(topFilms)
