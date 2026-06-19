@@ -95,7 +95,7 @@ export default function FilmDetail() {
     sinopsis = parts.length > 1 ? parts[1].trim() : ''
   }
 
-  const viewCount = (film.views || 0).toLocaleString('id-ID')
+  const viewCount = (film.views_count || 0).toLocaleString('id-ID')
   const dateFormatted = film.created_at
     ? new Date(film.created_at).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
     : 'Tanggal tidak diketahui'
