@@ -72,24 +72,16 @@ export default function Schedule() {
         const rawSchedules = schedulesRedux || [];
         const rawContents = contents || [];
 
-        // Build 7 days starting from current Monday
-        const curr = new Date();
-        const day = curr.getDay();
-        const diff = curr.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-        const monday = new Date(curr.setDate(diff));
+        // Build 7 days starting from today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        const weekDays = [
-          "Senin",
-          "Selasa",
-          "Rabu",
-          "Kamis",
-          "Jumat",
-          "Sabtu",
-          "Minggu",
-        ];
-        const newSchedules = weekDays.map((dayName, idx) => {
-          const targetDate = new Date(monday);
-          targetDate.setDate(monday.getDate() + idx);
+        const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+
+        const newSchedules = Array.from({ length: 7 }, (_, idx) => {
+          const targetDate = new Date(today);
+          targetDate.setDate(today.getDate() + idx);
+          const dayName = dayNames[targetDate.getDay()];
           const dStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, "0")}-${String(targetDate.getDate()).padStart(2, "0")}`;
 
           // Find schedule for this date
